@@ -1,54 +1,79 @@
 'use client';
 
-import React, { useRef } from 'react';
-import SignaturePad from 'react-signature-canvas';
-import type SignatureCanvas from 'react-signature-canvas';
+import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function Page() {
-  const signatureRef = useRef<SignatureCanvas>(null);
+  const [scanResult, setScanResult] = useState<string>('No result');
+  const [currentCamera, setCurrentCamera] = useState('environment');
+  const [isClient, setIsClient] = useState(false);
 
-  const clearSignature = () => {
-    signatureRef.current?.clear();
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Create scanner instance
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        qrbox: {
+          width: 250,
+          height: 250,
+        },
+        fps: 5,
+        videoConstraints: {
+          facingMode: { exact: currentCamera }
+        }
+      },
+      false
+    );
+
+    // Define success and error handlers
+    const success = (result: string) => {
+      setScanResult(result);
+      scanner.clear();
+    };
+
+    const error = (err: string) => {
+      console.warn(err);
+    };
+
+    // Start scanning
+    scanner.render(success, error);
+
+    // Cleanup
+    return () => {
+      scanner.clear();
+    };
+  }, [currentCamera, isClient]);
+
+  const toggleCamera = () => {
+    setCurrentCamera(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
-  const saveSignature = () => {
-    if (signatureRef.current) {
-      const dataUrl = signatureRef.current.getTrimmedCanvas().toDataURL('image/png');
-      // Do something with the dataUrl
-      console.log(dataUrl);
-    }
-  };
+  if (!isClient) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-white">Signature Pad</h1>
+      <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
       
       <div className="max-w-md mx-auto">
-        <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
-          <SignaturePad
-            canvasProps={{
-              width: 500,
-              height: 200,
-              className: 'signature-canvas bg-black rounded-lg'
-            }}
-            ref={signatureRef}
-            penColor="white"
-          />
-        </div>
-        
-        <div className="mt-4 flex gap-4">
-          <button 
-            onClick={clearSignature}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Clear
-          </button>
-          <button 
-            onClick={saveSignature}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Save
-          </button>
+        <button 
+          onClick={toggleCamera}
+          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Switch Camera ({currentCamera === 'environment' ? 'Rear' : 'Front'})
+        </button>
+        <div id="reader"></div>
+        <div className="mt-4 p-4 border rounded">
+          <p className="font-semibold">Scanned Result:</p>
+          <p className="break-all">{scanResult}</p>
         </div>
       </div>
     </div>
