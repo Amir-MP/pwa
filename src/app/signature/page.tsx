@@ -21,7 +21,7 @@ type SignatureCanvasType = {
 };
 
 export default function Signature() {
-  const signatureRef = useRef<SignatureCanvasType | null>(null);
+  const signatureRef = useRef<any | null>(null);
   const [signatureData, setSignatureData] = useState<string>("");
 
   const clearSignature = () => {
