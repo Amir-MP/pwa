@@ -66,7 +66,7 @@ const FingerPrint = () => {
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold">Login with Fingerprint</h2>
           <p className="mt-2 text-gray-600">
-            Use your device's biometric authentication to sign in
+            Use your device&apos;s biometric authentication to sign in
           </p>
         </div>
 
