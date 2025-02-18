@@ -13,18 +13,9 @@ const SignaturePad = dynamic(
   }
 );
 
-type SignatureCanvasType = {
-  clear: () => void;
-  isEmpty: () => boolean;
-  getTrimmedCanvas: () => {
-    toDataURL: (type: string) => string;
-  };
-};
-
 export default function Signature() {
   const signatureRef = useRef<any | null>(null);
   const [signatureData, setSignatureData] = useState<string>("");
-
   const clearSignature = () => {
     if (signatureRef.current) {
       signatureRef.current.clear();
@@ -52,6 +43,7 @@ export default function Signature() {
 
       <div className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]">
         <SignaturePad
+          //@ts-ignore
           ref={signatureRef}
           canvasProps={{
             width: 500,
@@ -61,7 +53,6 @@ export default function Signature() {
           penColor="white"
         />
       </div>
-
       <div className="mt-4 space-x-4">
         <button
           onClick={clearSignature}
