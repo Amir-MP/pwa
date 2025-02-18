@@ -1,27 +1,42 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const SignaturePad = dynamic(
-  () => import("react-signature-canvas").then((mod) => mod.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full max-w-[500px] h-[200px] bg-gray-700 rounded-lg" />
-    ),
-  }
-);
+const SignatureCanvas = dynamic(
+    () => import("react-signature-canvas").then((mod) => mod.default),
+    {
+      ssr: false,
+      loading: () => (
+        <div className="w-full h-[150px] bg-gray-700 rounded-lg" />
+      ),
+    }
+  );
 
 export default function Signature() {
-  const signatureRef = useRef<any | null>(null);
-  const [signatureData, setSignatureData] = useState<string>("");
+    const signatureRef = useRef<any>(null);
+    const [signatureData, setSignatureData] = useState<string>("");
+    const containerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 150 });
+
   const clearSignature = () => {
     if (signatureRef.current) {
       signatureRef.current.clear();
       setSignatureData("");
     }
   };
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth - 32; // Subtract padding
+        setCanvasSize({ width, height: 150 });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
 
   const saveSignature = () => {
     if (!signatureRef.current || signatureRef.current.isEmpty()) {
@@ -39,20 +54,23 @@ export default function Signature() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-      <h1 className="text-3xl font-bold text-white mb-8">Digital Signature</h1>
+    <h1 className="text-3xl font-bold text-white mb-8">Digital Signature</h1>
 
-      <div className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]">
-        <SignaturePad
-          //@ts-ignore
-          ref={signatureRef}
-          canvasProps={{
-            width: 500,
-            height: 200,
-            className: "sigCanvas bg-gray-700 rounded-lg touch-none",
-          }}
-          penColor="white"
-        />
-      </div>
+    <div 
+      ref={containerRef}
+      className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
+    >
+      <SignatureCanvas
+        ref={signatureRef}
+        canvasProps={{
+          width: canvasSize.width,
+          height: canvasSize.height,
+          className: "sigCanvas bg-gray-700 rounded-lg touch-none",
+          style: { width: '100%', height: '100%' }
+        }}
+        penColor="white"
+      />
+    </div>
       <div className="mt-4 space-x-4">
         <button
           onClick={clearSignature}
