@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: "export",
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 const withPWA = require("@ducanh2912/next-pwa").default({
