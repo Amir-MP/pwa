@@ -61,6 +61,7 @@ export default function Signature() {
       className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
     >
       <SignatureCanvas
+        //@ts-ignore
         ref={signatureRef}
         canvasProps={{
           width: canvasSize.width,
