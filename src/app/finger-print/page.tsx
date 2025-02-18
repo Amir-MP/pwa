@@ -15,7 +15,7 @@ function FingerprintAuthContent() {
     isLoading,
     error: fpError,
     data,
-  } = useVisitorData({ immediate: true });
+  } = useVisitorData();
 
   const handleFingerPrintLogin = async () => {
     try {
