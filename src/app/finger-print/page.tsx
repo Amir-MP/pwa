@@ -13,35 +13,46 @@ function FingerprintAuthContent() {
       setIsLoading(true);
       setError(null);
 
-      // Try using biometric authentication if available
-      if (window.PublicKeyCredential && 
-          // @ts-ignore - some browsers might not have this API yet
-          window.PublicKeyCredential.isConditionalMediationAvailable) {
-        
-        // Check if biometric authentication is available
-        const isBiometricAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        
-        if (!isBiometricAvailable) {
-          throw new Error('Biometric authentication is not available on this device');
-        }
-
-        // Request biometric authentication
-        const result = await new Promise((resolve, reject) => {
-          // @ts-ignore - Using subtle.digest for simple authentication
-          window.crypto.subtle.digest('SHA-256', new TextEncoder().encode('authentication'))
-            .then(() => resolve(true))
-            .catch(reject);
-        });
-
-        if (result) {
-          console.log('Authentication successful');
-          router.push('/dashboard');
-        } else {
-          throw new Error('Authentication failed');
-        }
-      } else {
+      // Check if the browser supports biometric authentication
+      if (!window.PublicKeyCredential) {
         throw new Error('Biometric authentication is not supported in this browser');
       }
+
+      // Check if platform authenticator is available
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!available) {
+        throw new Error('Biometric authentication is not available on this device');
+      }
+
+      // Generate a random challenge
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      // Create authentication options
+      const authenticationOptions = {
+        publicKey: {
+          challenge,
+          timeout: 60000,
+          userVerification: 'required' as UserVerificationRequirement,
+          rpId: window.location.hostname,
+        }
+      };
+
+      try {
+        // This will trigger the biometric prompt
+        const credential = await navigator.credentials.get(authenticationOptions);
+        
+        if (!credential) {
+          throw new Error('No credentials received');
+        }
+
+        // If we get here, authentication was successful
+        console.log('Authentication successful');
+        router.push('/dashboard');
+      } catch (credentialError) {
+        throw new Error('Biometric authentication failed. Please try again.');
+      }
+
     } catch (err) {
       console.error('Authentication error:', err);
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
@@ -50,11 +61,12 @@ function FingerprintAuthContent() {
     }
   };
 
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
         <h1 className="text-2xl font-bold text-center mb-6">
-          Biometric Login
+          Biometric Login 2
         </h1>
         
         <div className="flex flex-col items-center">
