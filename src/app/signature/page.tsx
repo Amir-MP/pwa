@@ -2,14 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import type SignatureCanvas from "react-signature-canvas";
 
 const SignaturePad = dynamic(() => import("react-signature-canvas"), {
   ssr: false,
 });
 
 export default function Signature() {
-  const signatureRef = useRef<SignatureCanvas>(null);
+  const signatureRef = useRef<any>(null);
   const [signatureData, setSignatureData] = useState<string>("");
 
   const clearSignature = () => {
