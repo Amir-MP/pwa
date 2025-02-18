@@ -25,8 +25,9 @@ export default function Page() {
           height: 250,
         },
         fps: 5,
-        defaultDeviceId: currentCamera,
-        facingMode: { exact: currentCamera },
+        videoConstraints: {
+          facingMode: { exact: currentCamera }
+        }
       },
       false
     );
