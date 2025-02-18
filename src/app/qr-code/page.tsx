@@ -1,42 +1,140 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import React, { useState, useEffect, useRef } from "react";
+import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
+const customStyles = `
+  /* Custom styles for the QR scanner */
 
+    /* Hide default elements */
+  #reader__dashboard_section_csr {
+    display: none !important;
+  }
+  
+  #reader__dashboard_section_fsr {
+    display: none !important;
+  }
+
+  #reader__filescan_input {
+    display: none !important;
+  }
+
+  /* Rest of your custom styles remain the same */
+  #reader {
+    width: 100% !important;
+    border: none !important;
+    min-height: 300px !important;
+  }
+  #reader {
+    width: 100% !important;
+    border: none !important;
+    min-height: 300px !important;
+  }
+
+  #reader__scan_region {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    min-height: 300px !important;
+  }
+
+  #reader__scan_region > img {
+    display: none !important; /* Hide the QR frame image */
+  }
+
+  #reader__scan_region video {
+    border-radius: 12px !important;
+    max-height: 300px !important;
+    object-fit: cover !important;
+  }
+
+  #reader__camera_selection {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    padding: 0.5rem !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+  }
+
+  #reader__dashboard {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  #reader__dashboard_section {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  #reader__dashboard_section_swaplink {
+    color: #3b82f6 !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+  }
+
+  #reader__status_span {
+    display: none !important;
+  }
+
+  /* Custom QR scanning region overlay */
+  #reader__scan_region::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    }
+  }
+`;
 export default function Page() {
-  const [scanResult, setScanResult] = useState<string>('');
-  const [currentCamera, setCurrentCamera] = useState('environment');
+  const [scanResult, setScanResult] = useState<string>("");
+  const [currentCamera, setCurrentCamera] = useState("environment");
   const [isClient, setIsClient] = useState(false);
-  const [isScanning, setIsScanning] = useState(true);
-  const [hasPermission, setHasPermission] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    // Request camera permission on component mount
-    requestCameraPermission();
-  }, []);
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasPermission, setHasPermission] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const requestCameraPermission = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      await navigator.mediaDevices.getUserMedia({ video: true });
       setHasPermission(true);
-      // Stop the stream since we only needed it for permission
-      stream.getTracks().forEach(track => track.stop());
+      setIsScanning(true);
     } catch (error) {
-      console.error('Camera permission denied:', error);
+      console.error("Camera permission denied:", error);
       setHasPermission(false);
     }
   };
 
   useEffect(() => {
-    if (!isClient || !isScanning || !hasPermission) return;
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !isScanning) return;
 
     let html5QrcodeScanner: Html5QrcodeScanner | null = null;
 
     const initializeScanner = async () => {
       try {
-        // Create scanner instance
         html5QrcodeScanner = new Html5QrcodeScanner(
           "reader",
           {
@@ -46,15 +144,14 @@ export default function Page() {
             },
             fps: 5,
             videoConstraints: {
-              facingMode: { exact: currentCamera }
+              facingMode: { exact: currentCamera },
             },
-            showTorchButtonIfSupported: true, // Show torch button if device supports it
-            aspectRatio: 1, // Square aspect ratio for better scanning
+            showTorchButtonIfSupported: true,
+            aspectRatio: 1,
           },
           false
         );
 
-        // Define success and error handlers
         const success = (result: string) => {
           setScanResult(result);
           setIsScanning(false);
@@ -62,38 +159,51 @@ export default function Page() {
         };
 
         const error = (err: string) => {
-          // Only log errors that aren't related to normal scanning process
-          if (!err.includes('No QR code found')) {
+          if (!err.includes("No QR code found")) {
             console.warn(err);
           }
         };
 
-        // Start scanning
         await html5QrcodeScanner.render(success, error);
       } catch (err) {
-        console.error('Failed to initialize scanner:', err);
+        console.error("Scanner error:", err);
       }
     };
 
     initializeScanner();
 
-    // Cleanup
     return () => {
       if (html5QrcodeScanner) {
         html5QrcodeScanner.clear().catch(console.error);
       }
     };
-  }, [currentCamera, isClient, isScanning, hasPermission]);
+  }, [currentCamera, isClient, isScanning]);
 
-  const toggleCamera = () => {
-    setCurrentCamera(prev => prev === 'environment' ? 'user' : 'environment');
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const html5QrCode = new Html5Qrcode("reader");
+      try {
+        const result = await html5QrCode.scanFile(file, true);
+        setScanResult(result);
+        setIsScanning(false);
+      } catch (err) {
+        console.error("File scan error:", err);
+      }
+    }
   };
+  useEffect(() => {
+    // Add custom styles to the document
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = customStyles;
+    document.head.appendChild(styleSheet);
 
-  const toggleScanning = () => {
-    setIsScanning(prev => !prev);
-    setScanResult('');
-  };
-
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -102,67 +212,148 @@ export default function Page() {
     );
   }
 
-  if (!hasPermission) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4 text-red-600">Camera Permission Required</h2>
-          <p className="mb-4 text-gray-600">Please allow camera access to scan QR codes.</p>
-          <button
-            onClick={requestCameraPermission}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Grant Camera Permission
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="container mx-auto p-4">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">QR Scanner</h1>
-          
-          <div className="space-y-4">
-            <div className="flex gap-2 justify-center">
-              <button 
-                onClick={toggleCamera}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6">
+          <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+            QR Code Scanner
+          </h1>
+
+          {!hasPermission ? (
+            <div className="text-center p-8">
+              <button
+                onClick={requestCameraPermission}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium 
+                         hover:bg-blue-700 transition-all duration-200 
+                         flex items-center justify-center gap-2 mx-auto"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
-                </svg>
-                Switch Camera ({currentCamera === 'environment' ? 'Rear' : 'Front'})
-              </button>
-
-              {!isScanning && (
-                <button 
-                  onClick={toggleScanning}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5m0 9V18A2.25 2.25 0 0 1 18 20.25h-1.5m-9 0H6A2.25 2.25 0 0 1 3.75 18v-1.5M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                  </svg>
-                  Scan Again
-                </button>
-              )}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Enable Camera Access
+              </button>
             </div>
+          ) : (
+            <>
+              {/* Scanner Container */}
+              <div className="mb-6 relative rounded-2xl overflow-hidden bg-gray-50">
+                <div id="reader" className="shadow-inner"></div>
+              </div>
 
-            <div className="relative">
-              <div id="reader" className="overflow-hidden rounded-lg"></div>
+              {/* Control Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setCurrentCamera("environment")}
+                  className={`
+                    col-span-1 p-4 rounded-xl font-medium transition-all duration-200
+                    flex items-center justify-center gap-2
+                    ${
+                      currentCamera === "environment"
+                        ? "bg-blue-600 text-white shadow-lg scale-105"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }
+                  `}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Back Camera
+                </button>
+
+                <button
+                  onClick={() => setCurrentCamera("user")}
+                  className={`
+                    col-span-1 p-4 rounded-xl font-medium transition-all duration-200
+                    flex items-center justify-center gap-2
+                    ${
+                      currentCamera === "user"
+                        ? "bg-blue-600 text-white shadow-lg scale-105"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }
+                  `}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Front Camera
+                </button>
+              </div>
+
+              {/* Result Display */}
               {!isScanning && scanResult && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h2 className="font-semibold text-green-800 mb-2">Scanned Successfully!</h2>
-                  <p className="break-all text-green-700">{scanResult}</p>
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl animate-fade-in">
+                  <h2 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Scan Result
+                  </h2>
+                  <div className="bg-white p-4 rounded-lg break-all text-gray-800 border border-green-100">
+                    {scanResult}
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+// Add this to your global CSS file
+const globalStyles = `
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+`;
