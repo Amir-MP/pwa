@@ -11,6 +11,7 @@ interface SignatureComponentProps {
 export default function SignatureComponent({ onSave, onClear }: SignatureComponentProps) {
   const signaturePadRef = useRef<SignaturePad>(null);
   const [SignaturePadComponent, setSignaturePadComponent] = useState<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Dynamic import of the component
@@ -33,6 +34,14 @@ export default function SignatureComponent({ onSave, onClear }: SignatureCompone
     return () => document.removeEventListener('saveSignature', handleSave);
   }, [onSave]);
 
+  useEffect(() => {
+    // Adjust canvas size when component mounts
+    if (containerRef.current && signaturePadRef.current) {
+      const canvas = signaturePadRef.current as any;
+      canvas.clear(); // Clear any existing signature
+    }
+  }, [SignaturePadComponent]);
+
   const handleClear = () => {
     if (signaturePadRef.current) {
       signaturePadRef.current.clear();
@@ -47,11 +56,22 @@ export default function SignatureComponent({ onSave, onClear }: SignatureCompone
   }
 
   return (
-    <SignaturePadComponent
-      ref={signaturePadRef}
-      canvasProps={{
-        className: "w-[500px] h-[200px] bg-white rounded-lg",
-      }}
-    />
+    <div ref={containerRef} className="touch-none">
+      <SignaturePadComponent
+        ref={signaturePadRef}
+        canvasProps={{
+          className: "w-[500px] h-[200px] bg-white rounded-lg touch-none",
+          style: {
+            touchAction: 'none',
+            msTouchAction: 'none'
+          }
+        }}
+        dotSize={2}
+        minWidth={2}
+        maxWidth={3}
+        throttle={16}
+        backgroundColor="rgb(255, 255, 255)"
+      />
+    </div>
   );
 } 
