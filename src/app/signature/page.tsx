@@ -3,32 +3,45 @@
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
-const SignaturePad = dynamic(() => import("react-signature-canvas"), {
-  ssr: false,
-});
+// Modify the dynamic import to handle types better
+const SignaturePad = dynamic(
+  () => import("react-signature-canvas").then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => <div className="w-[500px] h-[200px] bg-gray-700 rounded-lg" />,
+  }
+);
+
+type SignatureCanvasType = {
+  clear: () => void;
+  isEmpty: () => boolean;
+  getTrimmedCanvas: () => {
+    toDataURL: (type: string) => string;
+  };
+};
 
 export default function Signature() {
-  const signatureRef = useRef<any>(null);
+  const signatureRef = useRef<SignatureCanvasType | null>(null);
   const [signatureData, setSignatureData] = useState<string>("");
 
   const clearSignature = () => {
-    signatureRef.current?.clear();
-    setSignatureData("");
+    if (signatureRef.current) {
+      signatureRef.current.clear();
+      setSignatureData("");
+    }
   };
 
   const saveSignature = () => {
-    if (signatureRef.current?.isEmpty()) {
+    if (!signatureRef.current || signatureRef.current.isEmpty()) {
       alert("Please provide a signature");
       return;
     }
 
-    // Get base64 string of the signature
     const dataURL = signatureRef.current
-      ?.getTrimmedCanvas()
+      .getTrimmedCanvas()
       .toDataURL("image/png");
-    setSignatureData(dataURL || "");
+    setSignatureData(dataURL);
 
-    // Here you can send the dataURL to your backend
     console.log("Signature saved:", dataURL);
   };
 
@@ -38,9 +51,8 @@ export default function Signature() {
 
       <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
         <SignaturePad
+          ref={signatureRef}
           canvasProps={{
-            // @ts-ignore
-            ref: signatureRef,
             width: 500,
             height: 200,
             className: "sigCanvas bg-gray-700 rounded-lg",
@@ -70,7 +82,7 @@ export default function Signature() {
           <img
             src={signatureData}
             alt="Saved signature"
-            className="max-w-[500px] p-2 rounded "
+            className="max-w-[500px] p-2 rounded"
           />
         </div>
       )}
