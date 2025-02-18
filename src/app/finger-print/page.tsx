@@ -28,47 +28,39 @@ function FingerprintAuthContent() {
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
 
-      // Create authentication options specifically for biometric auth
-      const authenticationOptions = {
-        publicKey: {
-          challenge,
-          timeout: 60000,
-          userVerification: 'required' as UserVerificationRequirement,
-          authenticatorAttachment: 'platform' as AuthenticatorAttachment,
-          rpId: window.location.hostname,
-          allowCredentials: [], // Empty array to prevent passkey prompt
-        }
-      };
+      // Generate random user ID
+      const userId = new Uint8Array(16);
+      crypto.getRandomValues(userId);
 
       // Create registration options for first-time setup
-      const registrationOptions = {
-        publicKey: {
-          challenge,
-          rp: {
-            name: 'Your App Name',
-            id: window.location.hostname,
-          },
-          user: {
-            id: new Uint8Array(16), // Generate a random user ID
-            name: 'user@example.com',
-            displayName: 'Test User',
-          },
-          pubKeyCredParams: [{
-            type: 'public-key',
-            alg: -7
-          }],
-          timeout: 60000,
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            requireResidentKey: false,
-            userVerification: 'required'
-          }
+      const registrationOptions: PublicKeyCredentialCreationOptions = {
+        challenge,
+        rp: {
+          name: 'Your App Name',
+          id: window.location.hostname,
+        },
+        user: {
+          id: userId,
+          name: 'user@example.com',
+          displayName: 'Test User',
+        },
+        pubKeyCredParams: [{
+          type: 'public-key',
+          alg: -7
+        }],
+        timeout: 60000,
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          requireResidentKey: false,
+          userVerification: 'required'
         }
       };
 
       try {
-        // First try to authenticate
-        const credential = await navigator.credentials.create(registrationOptions);
+        // Create credentials and trigger biometric auth
+        const credential = await navigator.credentials.create({
+          publicKey: registrationOptions
+        });
         
         if (!credential) {
           throw new Error('No credentials received');
@@ -89,12 +81,11 @@ function FingerprintAuthContent() {
     }
   };
 
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
         <h1 className="text-2xl font-bold text-center mb-6">
-          Biometric Login 2
+          Biometric Login3
         </h1>
         
         <div className="flex flex-col items-center">
