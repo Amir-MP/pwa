@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
-// Modify the dynamic import to handle types better
 const SignaturePad = dynamic(
   () => import("react-signature-canvas").then((mod) => mod.default),
   {
