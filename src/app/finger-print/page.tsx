@@ -28,19 +28,47 @@ function FingerprintAuthContent() {
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
 
-      // Create authentication options
+      // Create authentication options specifically for biometric auth
       const authenticationOptions = {
         publicKey: {
           challenge,
           timeout: 60000,
           userVerification: 'required' as UserVerificationRequirement,
+          authenticatorAttachment: 'platform' as AuthenticatorAttachment,
           rpId: window.location.hostname,
+          allowCredentials: [], // Empty array to prevent passkey prompt
+        }
+      };
+
+      // Create registration options for first-time setup
+      const registrationOptions = {
+        publicKey: {
+          challenge,
+          rp: {
+            name: 'Your App Name',
+            id: window.location.hostname,
+          },
+          user: {
+            id: new Uint8Array(16), // Generate a random user ID
+            name: 'user@example.com',
+            displayName: 'Test User',
+          },
+          pubKeyCredParams: [{
+            type: 'public-key',
+            alg: -7
+          }],
+          timeout: 60000,
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            requireResidentKey: false,
+            userVerification: 'required'
+          }
         }
       };
 
       try {
-        // This will trigger the biometric prompt
-        const credential = await navigator.credentials.get(authenticationOptions);
+        // First try to authenticate
+        const credential = await navigator.credentials.create(registrationOptions);
         
         if (!credential) {
           throw new Error('No credentials received');
