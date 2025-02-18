@@ -96,9 +96,10 @@ function FingerprintAuthContent() {
 export default function FingerprintAuth() {
   return (
     <FpjsProvider
-      loadOptions={{
-        apiKey: FPJS_PUBLIC_API_KEY
-      }}
+    loadOptions={{
+      apiKey: "qZmyudBqDna4WZaoGfb6",
+      region: "eu"
+    }}
     >
       <FingerprintAuthContent />
     </FpjsProvider>
