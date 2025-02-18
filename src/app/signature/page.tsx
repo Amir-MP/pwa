@@ -44,12 +44,16 @@ export default function Signature() {
       return;
     }
 
-    const dataURL = signatureRef.current
-      .getTrimmedCanvas()
-      .toDataURL("image/png");
-    setSignatureData(dataURL);
-
-    console.log("Signature saved:", dataURL);
+    try {
+      const dataURL = signatureRef.current
+        .getTrimmedCanvas()
+        .toDataURL("image/png");
+      setSignatureData(dataURL);
+      console.log("Signature saved:", dataURL);
+    } catch (error) {
+      console.error("Error saving signature:", error);
+      alert("Error saving signature. Please try again.");
+    }
   };
 
   return (
