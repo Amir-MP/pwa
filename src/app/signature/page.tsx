@@ -39,13 +39,14 @@ export default function Signature() {
 
       <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
         <SignaturePad
-          ref={signatureRef}
-          penColor="white"
           canvasProps={{
+            // @ts-ignore
+            ref: signatureRef,
             width: 500,
             height: 200,
             className: "sigCanvas bg-gray-700 rounded-lg",
           }}
+          penColor="white"
         />
       </div>
 
