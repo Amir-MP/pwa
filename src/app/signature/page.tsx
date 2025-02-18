@@ -39,17 +39,15 @@ export default function Signature() {
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
 
-
   const saveSignature = () => {
     if (!signatureRef.current || signatureRef.current.isEmpty()) {
       alert("Please provide a signature");
       return;
     }
-
+  
     try {
-      const dataURL = signatureRef.current
-        .getTrimmedCanvas()
-        .toDataURL("image/png");
+      // Use toData() instead of getTrimmedCanvas()
+      const dataURL = signatureRef.current.toDataURL("image/png");
       setSignatureData(dataURL);
       console.log("Signature saved:", dataURL);
     } catch (error) {
