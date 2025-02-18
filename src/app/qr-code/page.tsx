@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
+
 const customStyles = `
   /* Custom styles for the QR scanner */
 
-    /* Hide default elements */
+  /* Hide default elements */
   #reader__dashboard_section_csr {
     display: none !important;
   }
@@ -24,11 +25,6 @@ const customStyles = `
     border: none !important;
     min-height: 300px !important;
   }
-  #reader {
-    width: 100% !important;
-    border: none !important;
-    min-height: 300px !important;
-  }
 
   #reader__scan_region {
     background: #ffffff !important;
@@ -38,7 +34,7 @@ const customStyles = `
   }
 
   #reader__scan_region > img {
-    display: none !important; /* Hide the QR frame image */
+    display: none !important;
   }
 
   #reader__scan_region video {
@@ -105,17 +101,31 @@ const customStyles = `
     }
   }
 `;
+
 export default function Page() {
   const [scanResult, setScanResult] = useState<string>("");
   const [currentCamera, setCurrentCamera] = useState("environment");
   const [isClient, setIsClient] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [hasPermission, setHasPermission] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    requestCameraPermission();
+  }, [isClient]);
 
   const requestCameraPermission = async () => {
     try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: currentCamera
+        }
+      });
       setHasPermission(true);
       setIsScanning(true);
     } catch (error) {
@@ -125,26 +135,26 @@ export default function Page() {
   };
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient || !isScanning) return;
-
-    let html5QrcodeScanner: Html5QrcodeScanner | null = null;
+    if (!isClient || !isScanning || !hasPermission) return;
 
     const initializeScanner = async () => {
       try {
-        html5QrcodeScanner = new Html5QrcodeScanner(
+        // Clear existing scanner if any
+        if (scannerRef.current) {
+          await scannerRef.current.clear();
+        }
+
+        // Create new scanner instance
+        scannerRef.current = new Html5QrcodeScanner(
           "reader",
           {
             qrbox: {
               width: 250,
               height: 250,
             },
-            fps: 5,
+            fps: 10,
             videoConstraints: {
-              facingMode: { exact: currentCamera },
+              facingMode: currentCamera,
             },
             showTorchButtonIfSupported: true,
             aspectRatio: 1,
@@ -155,7 +165,9 @@ export default function Page() {
         const success = (result: string) => {
           setScanResult(result);
           setIsScanning(false);
-          html5QrcodeScanner?.clear();
+          if (scannerRef.current) {
+            scannerRef.current.clear();
+          }
         };
 
         const error = (err: string) => {
@@ -164,7 +176,7 @@ export default function Page() {
           }
         };
 
-        await html5QrcodeScanner.render(success, error);
+        await scannerRef.current.render(success, error);
       } catch (err) {
         console.error("Scanner error:", err);
       }
@@ -173,29 +185,13 @@ export default function Page() {
     initializeScanner();
 
     return () => {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch(console.error);
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
       }
     };
-  }, [currentCamera, isClient, isScanning]);
+  }, [currentCamera, isClient, isScanning, hasPermission]);
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const html5QrCode = new Html5Qrcode("reader");
-      try {
-        const result = await html5QrCode.scanFile(file, true);
-        setScanResult(result);
-        setIsScanning(false);
-      } catch (err) {
-        console.error("File scan error:", err);
-      }
-    }
-  };
   useEffect(() => {
-    // Add custom styles to the document
     const styleSheet = document.createElement("style");
     styleSheet.innerText = customStyles;
     document.head.appendChild(styleSheet);
@@ -204,6 +200,16 @@ export default function Page() {
       document.head.removeChild(styleSheet);
     };
   }, []);
+
+  const handleCameraSwitch = (newCamera: string) => {
+    if (scannerRef.current) {
+      scannerRef.current.clear().then(() => {
+        setCurrentCamera(newCamera);
+        setIsScanning(true);
+      }).catch(console.error);
+    }
+  };
+
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -253,15 +259,13 @@ export default function Page() {
             </div>
           ) : (
             <>
-              {/* Scanner Container */}
               <div className="mb-6 relative rounded-2xl overflow-hidden bg-gray-50">
                 <div id="reader" className="shadow-inner"></div>
               </div>
 
-              {/* Control Buttons */}
               <div className="grid grid-cols-2 gap-4">
                 <button
-                  onClick={() => setCurrentCamera("environment")}
+                  onClick={() => handleCameraSwitch("environment")}
                   className={`
                     col-span-1 p-4 rounded-xl font-medium transition-all duration-200
                     flex items-center justify-center gap-2
@@ -288,7 +292,7 @@ export default function Page() {
                 </button>
 
                 <button
-                  onClick={() => setCurrentCamera("user")}
+                  onClick={() => handleCameraSwitch("user")}
                   className={`
                     col-span-1 p-4 rounded-xl font-medium transition-all duration-200
                     flex items-center justify-center gap-2
@@ -315,7 +319,6 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* Result Display */}
               {!isScanning && scanResult && (
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl animate-fade-in">
                   <h2 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
@@ -336,6 +339,15 @@ export default function Page() {
                   <div className="bg-white p-4 rounded-lg break-all text-gray-800 border border-green-100">
                     {scanResult}
                   </div>
+                  <button
+                    onClick={() => {
+                      setScanResult("");
+                      setIsScanning(true);
+                    }}
+                    className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Scan Again
+                  </button>
                 </div>
               )}
             </>
@@ -345,15 +357,3 @@ export default function Page() {
     </div>
   );
 }
-
-// Add this to your global CSS file
-const globalStyles = `
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-in-out;
-}
-`;
