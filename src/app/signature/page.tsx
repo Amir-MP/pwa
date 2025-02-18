@@ -17,7 +17,7 @@ export default function Signature() {
     const signatureRef = useRef<any>(null);
     const [signatureData, setSignatureData] = useState<string>("");
     const containerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 150 });
+    const [canvasSize, setCanvasSize] = useState({ width: 500, height: 150 }); 
 
   const clearSignature = () => {
     if (signatureRef.current) {
@@ -28,15 +28,17 @@ export default function Signature() {
   useEffect(() => {
     const updateCanvasSize = () => {
       if (containerRef.current) {
-        const width = containerRef.current.offsetWidth - 32; // Subtract padding
+        const width = containerRef.current.offsetWidth - 32;
         setCanvasSize({ width, height: 150 });
       }
     };
 
-    updateCanvasSize();
+    // Add a small delay to ensure the container is properly mounted
+    setTimeout(updateCanvasSize, 0);
     window.addEventListener('resize', updateCanvasSize);
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
+
 
   const saveSignature = () => {
     if (!signatureRef.current || signatureRef.current.isEmpty()) {
@@ -61,21 +63,23 @@ export default function Signature() {
     <h1 className="text-3xl font-bold text-white mb-8">Digital Signature</h1>
 
     <div 
-      ref={containerRef}
-      className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
-    >
-      <SignatureCanvas
-        //@ts-ignore
-        ref={signatureRef}
-        canvasProps={{
-          width: canvasSize.width,
-          height: canvasSize.height,
-          className: "sigCanvas bg-gray-700 rounded-lg touch-none",
-          style: { width: '100%', height: '100%' }
-        }}
-        penColor="white"
-      />
-    </div>
+        ref={containerRef}
+        className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
+      >
+        {canvasSize.width > 0 && (  // Only render canvas when we have a valid width
+          <SignatureCanvas
+            //@ts-ignore
+            ref={signatureRef}
+            canvasProps={{
+              width: canvasSize.width,
+              height: canvasSize.height,
+              className: "sigCanvas bg-gray-700 rounded-lg touch-none",
+              style: { width: '100%', height: '100%' }
+            }}
+            penColor="white"
+          />
+        )}
+      </div>
       <div className="mt-4 space-x-4">
         <button
           onClick={clearSignature}
