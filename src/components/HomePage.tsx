@@ -191,11 +191,7 @@ export default function HomePage() {
               <Card
                 sx={{
                   cursor: "pointer",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: 4,
-                  },
+                 
                   background: "rgba(255, 255, 255, 0.1)",
                   backdropFilter: "blur(10px)",
                   borderRadius: 2,
@@ -241,11 +237,7 @@ export default function HomePage() {
               <Card
                 sx={{
                   cursor: "pointer",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: 4,
-                  },
+                 
                   height: "100%",
                   display: "flex",
                   alignItems: "center",
