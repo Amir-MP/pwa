@@ -16,20 +16,39 @@ export default function Page() {
     if (isScanning && videoRef.current && !scannerRef.current) {
       scannerRef.current = new QrScanner(
         videoRef.current,
-        result => {
-          console.log('decoded qr code:', result);
-          setScanResult(result.data);
-          setIsScanning(false);
-          scannerRef.current?.stop();
+        (result) => {
+          console.log('Scan result:', result);
+          if (result && result.data) {
+            setScanResult(result.data);
+            setIsScanning(false);
+            scannerRef.current?.stop();
+          }
         },
         {
           preferredCamera: 'environment',
+          maxScansPerSecond: 10,
           highlightScanRegion: true,
           highlightCodeOutline: true,
-        },
+          calculateScanRegion: (video) => {
+            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+            const scanRegionSize = Math.round(smallestDimension * 0.6);
+            
+            return {
+              x: Math.round((video.videoWidth - scanRegionSize) / 2),
+              y: Math.round((video.videoHeight - scanRegionSize) / 2),
+              width: scanRegionSize,
+              height: scanRegionSize,
+            };
+          },
+        }
       );
 
-      scannerRef.current.start();
+      // Set up error handling
+      scannerRef.current.start().catch((error) => {
+        console.error('Scanner start error:', error);
+        alert('Failed to start camera. Please make sure you have granted camera permissions.');
+        setIsScanning(false);
+      });
     }
 
     return () => {
@@ -40,7 +59,6 @@ export default function Page() {
       }
     };
   }, [isScanning]);
-
   const handleStartScan = () => {
     setIsScanning(true);
   };
