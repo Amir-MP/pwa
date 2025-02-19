@@ -7,17 +7,33 @@
   --foreground: #171717;
 }
 
+* {
+  font-feature-settings: 'ss02';
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
-
+@font-face {
+  font-family: IRANSansX;
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../public/iransansx/fonts/woff/IRANSansX-Medium.woff")
+      format("woff"),
+    url("../../public/iransansx/fonts/woff2/IRANSansX-Medium.woff2")
+      format("woff2");
+}
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+}
+html {
+  font-family: "IRANSansX", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 @keyframes scan {
