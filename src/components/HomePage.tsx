@@ -140,9 +140,7 @@ const BottomNav = () => {
               textDecoration: "none",
               flex: 1,
               height: "100%", // Added this
-              "&:hover": {
-                color: "primary.main",
-              },
+             
             }}
           >
             {item.icon}
