@@ -6,6 +6,26 @@ import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 export default function Page() {
   const [scanResult, setScanResult] = useState<string>("");
   const [isScanning, setIsScanning] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(scanResult);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const isURL = (str: string) => {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
@@ -139,10 +159,51 @@ export default function Page() {
                   </svg>
                   Scan Result
                 </h2>
-                <div className="bg-white/5 p-4 rounded-lg break-all text-gray-100 border border-white/10 mb-6">
-                  {scanResult}
+
+                <div className="space-y-4">
+                  {/* Type indicator */}
+                  <div className="text-xs font-medium text-blue-300/80">
+                    {isURL(scanResult) ? 'URL Detected' : 'Text Content'}
+                  </div>
+
+                  {/* Content display */}
+                  <div className="bg-white/5 p-4 rounded-lg break-all text-gray-100 border border-white/10 relative group">
+                    {scanResult}
+
+                    {/* Copy button */}
+                    <button
+                      onClick={handleCopy}
+                      className="absolute top-2 right-2 p-2 bg-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
+                      title="Copy to clipboard"
+                    >
+                      {copied ? (
+                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Action buttons for URL */}
+                  {isURL(scanResult) && (
+                    <a
+                      href={scanResult}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 text-center mt-4"
+                    >
+                      Open URL
+                    </a>
+                  )}
                 </div>
-                <div className="flex gap-4">
+
+                {/* Control buttons */}
+                <div className="flex gap-4 mt-6">
                   <button
                     onClick={() => {
                       setScanResult("");
