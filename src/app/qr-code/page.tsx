@@ -63,6 +63,7 @@ export default function QRCodeScanner() {
       setIsScanning(false);
     }
   };
+
   const stopScanning = async () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       await scannerRef.current.stop();
@@ -74,6 +75,22 @@ export default function QRCodeScanner() {
     setData('');
     setError('');
     startScanning();
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !scannerRef.current) return;
+
+    try {
+      setError('');
+      const result = await scannerRef.current.scanFile(file, /* showImage */ false);
+      setData(result);
+    } catch (err) {
+      setError('Error reading QR code from image: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      // Reset the input value so the same file can be uploaded again
+      event.target.value = '';
+    }
   };
 
   return (
@@ -89,13 +106,28 @@ export default function QRCodeScanner() {
           />
           
           {!isScanning && !data && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
               <button
                 onClick={startScanning}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
               >
                 Start Scanning
               </button>
+              
+              <div className="text-center">
+                <label className="block text-sm text-gray-600 mb-2">Or upload a QR code image</label>
+                <label 
+                  className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors border border-gray-300"
+                >
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
             </div>
           )}
         </div>
@@ -110,12 +142,25 @@ export default function QRCodeScanner() {
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
             <h2 className="font-bold mb-2">Scanned Result:</h2>
             <p className="break-all mb-4">{data}</p>
-            <button
-              onClick={resetScanner}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
-            >
-              Scan Another Code
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={resetScanner}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
+              >
+                Scan Another Code
+              </button>
+              <label 
+                className="cursor-pointer bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
+              >
+                Upload Another Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </label>
+            </div>
           </div>
         )}
 
