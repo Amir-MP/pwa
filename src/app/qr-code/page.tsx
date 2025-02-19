@@ -26,24 +26,43 @@ export default function QRCodeScanner() {
     try {
       setError('');
       setIsScanning(true);
-      await scannerRef.current.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          setData(decodedText);
-          stopScanning();
-        },
-        () => {} // Ignore failures
-      );
+      
+      // Try back camera first
+      try {
+        await scannerRef.current.start(
+          { facingMode: { exact: "environment" } },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            setData(decodedText);
+            stopScanning();
+          },
+          () => {} // Ignore failures
+        );
+      } catch {
+        // If back camera fails, try any available camera
+        await scannerRef.current.start(
+          { facingMode: "user" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            setData(decodedText);
+            stopScanning();
+          },
+          () => {} // Ignore failures
+        );
+      }
     } catch (err) {
       setError('Error accessing camera: ' + (err instanceof Error ? err.message : String(err)));
       setIsScanning(false);
     }
   };
-
   const stopScanning = async () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       await scannerRef.current.stop();
