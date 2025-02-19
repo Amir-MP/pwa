@@ -60,6 +60,7 @@ export default function Page() {
                     constraints={{
                       facingMode: "environment",
                     }}
+                    //@ts-ignore
                     style={{
                       width: "100%",
                       height: "100%",
