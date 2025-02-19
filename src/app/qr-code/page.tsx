@@ -13,54 +13,77 @@ export default function Page() {
   const scannerRef = useRef<QrScanner | null>(null);
 
   useEffect(() => {
-    if (isScanning && videoRef.current && !scannerRef.current) {
-      scannerRef.current = new QrScanner(
-        videoRef.current,
-        (result) => {
-          console.log('Scan result:', result);
-          if (result && result.data) {
-            setScanResult(result.data);
+    const setupScanner = async () => {
+      if (isScanning && videoRef.current && !scannerRef.current) {
+        try {
+          // First, check for camera permission
+          const hasCamera = await QrScanner.hasCamera();
+          if (!hasCamera) {
+            alert('No camera found on your device');
             setIsScanning(false);
-            scannerRef.current?.stop();
+            return;
           }
-        },
-        {
-          preferredCamera: 'environment',
-          maxScansPerSecond: 10,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          calculateScanRegion: (video) => {
-            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
-            const scanRegionSize = Math.round(smallestDimension * 0.6);
-            
-            return {
-              x: Math.round((video.videoWidth - scanRegionSize) / 2),
-              y: Math.round((video.videoHeight - scanRegionSize) / 2),
-              width: scanRegionSize,
-              height: scanRegionSize,
-            };
-          },
+
+          // Create new scanner instance
+          const qrScanner = new QrScanner(
+            videoRef.current,
+            (result) => {
+              console.log('Scanned result:', result);
+              alert(result);
+              if (result.data) {
+                setScanResult(result.data);
+                setIsScanning(false);
+                qrScanner.stop();
+              }
+            },
+            {
+              preferredCamera: 'environment',
+              maxScansPerSecond: 5,
+              highlightScanRegion: true,
+              highlightCodeOutline: true,
+              returnDetailedScanResult: true,
+            }
+          );
+
+          // Start scanning
+          await qrScanner.start();
+          scannerRef.current = qrScanner;
+
+          // Log success
+          console.log('Scanner started successfully');
+        } catch (error) {
+          console.error('Scanner setup error:', error);
+          alert('Failed to start camera. Please make sure you have granted camera permissions.');
+          setIsScanning(false);
         }
-      );
+      }
+    };
 
-      // Set up error handling
-      scannerRef.current.start().catch((error) => {
-        console.error('Scanner start error:', error);
-        alert('Failed to start camera. Please make sure you have granted camera permissions.');
-        setIsScanning(false);
-      });
-    }
+    setupScanner();
 
+    // Cleanup function
     return () => {
       if (scannerRef.current) {
+        console.log('Cleaning up scanner');
         scannerRef.current.stop();
         scannerRef.current.destroy();
         scannerRef.current = null;
       }
     };
   }, [isScanning]);
-  const handleStartScan = () => {
-    setIsScanning(true);
+
+  const handleStartScan = async () => {
+    try {
+      const hasCamera = await QrScanner.hasCamera();
+      if (hasCamera) {
+        setIsScanning(true);
+      } else {
+        alert('No camera found on your device');
+      }
+    } catch (error) {
+      console.error('Error checking for camera:', error);
+      alert('Error accessing camera');
+    }
   };
 
   const handleStopScan = () => {
@@ -71,7 +94,6 @@ export default function Page() {
     }
     setIsScanning(false);
   };
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(scanResult);
