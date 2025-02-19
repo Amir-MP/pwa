@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
+import React, { useState, useRef } from "react";
+import { Scanner } from "@yudiel/react-qr-scanner";
+import jsQR from "jsqr";
 
 export default function Page() {
   const [scanResult, setScanResult] = useState<string>("");
   const [isScanning, setIsScanning] = useState(false);
   const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopy = async () => {
     try {
@@ -24,6 +26,37 @@ export default function Page() {
       return true;
     } catch {
       return false;
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          
+          if (context) {
+            context.drawImage(image, 0, 0);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+              setScanResult(code.data);
+              setIsScanning(false);
+            } else {
+              alert('No QR code found in the image');
+            }
+          }
+        };
+        image.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -54,33 +87,64 @@ export default function Page() {
                   </svg>
                   <p className="text-gray-300 mb-8">Ready to scan QR codes</p>
                 </div>
-                <button
-                  onClick={() => setIsScanning(true)}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                >
-                  Start Scanning
-                </button>
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setIsScanning(true)}
+                    className="w-full px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  >
+                    Start Scanning
+                  </button>
+                  <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900 flex items-center justify-center gap-2"
+                    >
+                      <svg 
+                        className="w-5 h-5" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                        />
+                      </svg>
+                      Upload QR Image
+                    </button>
+                  {/* File upload button */}
+                  <div className="relative">
+                
+                  </div>
+                </div>
               </div>
             )}
-
-            {isScanning && (
+                        {isScanning && (
               <div className="relative rounded-2xl overflow-hidden bg-gray-900">
                 <div className="aspect-square">
                   <Scanner
-                    onScan={(detectedCodes: IDetectedBarcode[]) => {
-                      if (detectedCodes && detectedCodes.length > 0) {
-                        //@ts-ignore
-                        setScanResult(detectedCodes[0].text);
+                    //@ts-ignore
+                    onDecode={(result) => {
+                      console.log("Decoded result:", result);
+                      if (result) {
+                        setScanResult(result);
                         setIsScanning(false);
                       }
                     }}
-                    onError={(error: Error) => {
-                      console.log(error?.message);
+                    onError={(error) => {
+                      console.error("Scanning error:", error);
                     }}
                     constraints={{
                       facingMode: "environment",
                     }}
-                    //@ts-ignore
                     style={{
                       width: "100%",
                       height: "100%",
