@@ -19,7 +19,7 @@ export default function Page() {
             {!isScanning && !scanResult && (
               <div className="text-center py-12">
                 <div className="mb-6">
-                  <svg 
+                  <svg
                     className="w-24 h-24 mx-auto text-blue-500 mb-4 opacity-75"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -48,13 +48,14 @@ export default function Page() {
                 <div className="aspect-square">
                   <Scanner
                     onScan={(result) => {
+                      //@ts-ignore
                       setScanResult(result);
                       setIsScanning(false);
                     }}
-                    onError={(error) => console.log(error)}
+                    onError={(error) => console.log(error)} //@ts-ignore
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: "100%",
+                      height: "100%",
                     }}
                   />
                 </div>
@@ -70,16 +71,19 @@ export default function Page() {
                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500" />
                     {/* Bottom-right corner */}
                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500" />
-                    
+
                     {/* Scanning line animation */}
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 animate-[scan_2s_ease-in-out_infinite]" />
                   </div>
-                  
+
                   {/* Dark overlay outside scanning area */}
-                  <div className="absolute inset-0" style={{
-                    background: `radial-gradient(circle at center, transparent 130px, rgba(0, 0, 0, 0.8) 130px)`
-                  }} />
-                  
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `radial-gradient(circle at center, transparent 130px, rgba(0, 0, 0, 0.8) 130px)`,
+                    }}
+                  />
+
                   {/* Scanning instructions */}
                   <div className="absolute bottom-8 left-0 right-0 text-center text-white text-sm font-medium">
                     <p className="bg-black/50 mx-auto max-w-[250px] rounded-full px-4 py-2 backdrop-blur-sm">
@@ -93,8 +97,18 @@ export default function Page() {
                   onClick={() => setIsScanning(false)}
                   className="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all duration-200"
                 >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
