@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Scanner } from "@yudiel/react-qr-scanner";
+import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 
 export default function Page() {
   const [scanResult, setScanResult] = useState<string>("");
@@ -47,12 +47,19 @@ export default function Page() {
               <div className="relative rounded-2xl overflow-hidden bg-gray-900">
                 <div className="aspect-square">
                   <Scanner
-                    onScan={(result) => {
-                      //@ts-ignore
-                      setScanResult(result);
-                      setIsScanning(false);
+                    onScan={(detectedCodes: IDetectedBarcode[]) => {
+                      if (detectedCodes && detectedCodes.length > 0) {
+                        //@ts-ignore
+                        setScanResult(detectedCodes[0].text);
+                        setIsScanning(false);
+                      }
                     }}
-                    onError={(error) => console.log(error)} //@ts-ignore
+                    onError={(error: Error) => {
+                      console.log(error?.message);
+                    }}
+                    constraints={{
+                      facingMode: "environment",
+                    }}
                     style={{
                       width: "100%",
                       height: "100%",
