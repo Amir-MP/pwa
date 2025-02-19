@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { QrReader } from "react-qr-reader";
+import React, { useState, useRef, useEffect } from "react";
+import QrScanner from 'qr-scanner';
 import jsQR from "jsqr";
 
 export default function Page() {
@@ -9,6 +9,50 @@ export default function Page() {
   const [isScanning, setIsScanning] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<QrScanner | null>(null);
+
+  useEffect(() => {
+    if (isScanning && videoRef.current && !scannerRef.current) {
+      scannerRef.current = new QrScanner(
+        videoRef.current,
+        result => {
+          console.log('decoded qr code:', result);
+          setScanResult(result.data);
+          setIsScanning(false);
+          scannerRef.current?.stop();
+        },
+        {
+          preferredCamera: 'environment',
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        },
+      );
+
+      scannerRef.current.start();
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+        scannerRef.current.destroy();
+        scannerRef.current = null;
+      }
+    };
+  }, [isScanning]);
+
+  const handleStartScan = () => {
+    setIsScanning(true);
+  };
+
+  const handleStopScan = () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
+    }
+    setIsScanning(false);
+  };
 
   const handleCopy = async () => {
     try {
@@ -16,7 +60,7 @@ export default function Page() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy text: ", err);
+      console.error('Failed to copy text: ', err);
     }
   };
 
@@ -36,30 +80,21 @@ export default function Page() {
       reader.onload = (e) => {
         const image = new Image();
         image.onload = () => {
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
           canvas.width = image.width;
           canvas.height = image.height;
-
+          
           if (context) {
             context.drawImage(image, 0, 0);
-            const imageData = context.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            const code = jsQR(
-              imageData.data,
-              imageData.width,
-              imageData.height
-            );
-
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
             if (code) {
               setScanResult(code.data);
               setIsScanning(false);
             } else {
-              alert("No QR code found in the image");
+              alert('No QR code found in the image');
             }
           }
         };
@@ -98,11 +133,12 @@ export default function Page() {
                 </div>
                 <div className="space-y-4">
                   <button
-                    onClick={() => setIsScanning(true)}
+                    onClick={handleStartScan}
                     className="w-full px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
                   >
                     Start Scanning
                   </button>
+                  
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -114,86 +150,46 @@ export default function Page() {
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900 flex items-center justify-center gap-2"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                    <svg 
+                      className="w-5 h-5" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
                       stroke="currentColor"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                       />
                     </svg>
                     Upload QR Image
                   </button>
-                  {/* File upload button */}
-                  <div className="relative"></div>
                 </div>
               </div>
             )}
+
             {isScanning && (
               <div className="relative rounded-2xl overflow-hidden bg-gray-900">
                 <div className="aspect-square">
-                  <QrReader
-                    onResult={(result) => {
-                      if (result) {
-                        setScanResult(result?.text);
-                        setIsScanning(false);
-                      }
-                    }}
-                    constraints={{
-                      facingMode: "environment",
-                    }}
-                    videoStyle={{
-                      width: "100%",
-                      height: "100%",
-                    }}
-                    videoContainerStyle={{
-                      width: "100%",
-                      height: "100%",
-                      paddingTop: "100%",
-                    }}
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                {/* Enhanced scanning overlay */}
+                {/* Scanning overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {/* Corner markers for scanning area */}
                   <div className="relative w-72 h-72">
-                    {/* Top-left corner */}
                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500" />
-                    {/* Top-right corner */}
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500" />
-                    {/* Bottom-left corner */}
                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500" />
-                    {/* Bottom-right corner */}
                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500" />
-
-                    {/* Scanning line animation */}
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 animate-[scan_2s_ease-in-out_infinite]" />
                   </div>
-
-                  {/* Dark overlay outside scanning area */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: `radial-gradient(circle at center, transparent 130px, rgba(0, 0, 0, 0.8) 130px)`,
-                    }}
-                  />
-
-                  {/* Scanning instructions */}
-                  <div className="absolute bottom-8 left-0 right-0 text-center text-white text-sm font-medium">
-                    <p className="bg-black/50 mx-auto max-w-[250px] rounded-full px-4 py-2 backdrop-blur-sm">
-                      Position QR code within frame
-                    </p>
-                  </div>
                 </div>
 
-                {/* Stop scanning button */}
                 <button
-                  onClick={() => setIsScanning(false)}
+                  onClick={handleStopScan}
                   className="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all duration-200"
                 >
                   <svg
@@ -232,54 +228,31 @@ export default function Page() {
                 </h2>
 
                 <div className="space-y-4">
-                  {/* Type indicator */}
                   <div className="text-xs font-medium text-blue-300/80">
-                    {isURL(scanResult) ? "URL Detected" : "Text Content"}
+                    {isURL(scanResult) ? 'URL Detected' : 'Text Content'}
                   </div>
 
-                  {/* Content display */}
                   <div className="bg-white/5 p-4 rounded-lg break-all text-gray-100 border border-white/10 relative group">
                     {scanResult}
 
-                    {/* Copy button */}
                     <button
                       onClick={handleCopy}
                       className="absolute top-2 right-2 p-2 bg-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
                       title="Copy to clipboard"
                     >
                       {copied ? (
-                        <svg
-                          className="w-5 h-5 text-green-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
+                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
-                        <svg
-                          className="w-5 h-5 text-gray-300"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                          />
+                        <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                       )}
                     </button>
                   </div>
 
-                  {/* Action buttons for URL */}
                   {isURL(scanResult) && (
                     <a
                       href={scanResult}
@@ -292,12 +265,11 @@ export default function Page() {
                   )}
                 </div>
 
-                {/* Control buttons */}
                 <div className="flex gap-4 mt-6">
                   <button
                     onClick={() => {
                       setScanResult("");
-                      setIsScanning(true);
+                      handleStartScan();
                     }}
                     className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200"
                   >
