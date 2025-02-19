@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Scanner } from "@yudiel/react-qr-scanner";
+import { QrReader } from "react-qr-reader";
 import jsQR from "jsqr";
 
 export default function Page() {
@@ -16,7 +16,7 @@ export default function Page() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error("Failed to copy text: ", err);
     }
   };
 
@@ -36,21 +36,30 @@ export default function Page() {
       reader.onload = (e) => {
         const image = new Image();
         image.onload = () => {
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
           canvas.width = image.width;
           canvas.height = image.height;
-          
+
           if (context) {
             context.drawImage(image, 0, 0);
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            
+            const imageData = context.getImageData(
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+            const code = jsQR(
+              imageData.data,
+              imageData.width,
+              imageData.height
+            );
+
             if (code) {
               setScanResult(code.data);
               setIsScanning(false);
             } else {
-              alert('No QR code found in the image');
+              alert("No QR code found in the image");
             }
           }
         };
@@ -95,59 +104,57 @@ export default function Page() {
                     Start Scanning
                   </button>
                   <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageUpload}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900 flex items-center justify-center gap-2"
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900 flex items-center justify-center gap-2"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <svg 
-                        className="w-5 h-5" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
-                      Upload QR Image
-                    </button>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                      />
+                    </svg>
+                    Upload QR Image
+                  </button>
                   {/* File upload button */}
-                  <div className="relative">
-                
-                  </div>
+                  <div className="relative"></div>
                 </div>
               </div>
             )}
-                        {isScanning && (
+            {isScanning && (
               <div className="relative rounded-2xl overflow-hidden bg-gray-900">
                 <div className="aspect-square">
-                  <Scanner
-                    //@ts-ignore
-                    onDecode={(result) => {
-                      console.log("Decoded result:", result);
+                  <QrReader
+                    onResult={(result) => {
                       if (result) {
-                        setScanResult(result);
+                        setScanResult(result?.text);
                         setIsScanning(false);
                       }
-                    }}
-                    onError={(error) => {
-                      console.error("Scanning error:", error);
                     }}
                     constraints={{
                       facingMode: "environment",
                     }}
-                    style={{
+                    videoStyle={{
                       width: "100%",
                       height: "100%",
+                    }}
+                    videoContainerStyle={{
+                      width: "100%",
+                      height: "100%",
+                      paddingTop: "100%",
                     }}
                   />
                 </div>
@@ -227,7 +234,7 @@ export default function Page() {
                 <div className="space-y-4">
                   {/* Type indicator */}
                   <div className="text-xs font-medium text-blue-300/80">
-                    {isURL(scanResult) ? 'URL Detected' : 'Text Content'}
+                    {isURL(scanResult) ? "URL Detected" : "Text Content"}
                   </div>
 
                   {/* Content display */}
@@ -241,13 +248,32 @@ export default function Page() {
                       title="Copy to clipboard"
                     >
                       {copied ? (
-                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-5 h-5 text-green-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       ) : (
-                        <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        <svg
+                          className="w-5 h-5 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                          />
                         </svg>
                       )}
                     </button>
