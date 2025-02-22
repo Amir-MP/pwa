@@ -40,6 +40,7 @@ const NAVIGATION_ITEMS = {
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
     { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
     { name: "سایر خدمات", icon: <MedicalIcon />, href: "/notifications" },
+    { name: "ظبط ویدئو", icon: <MedicalIcon />, href: "/face-recording" },
   ],
   quickAccess: [
     { name: "درخواست ها", icon: <RequestIcon />, href: "/requests" },
