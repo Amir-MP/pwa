@@ -1,17 +1,16 @@
 "use client";
-import { Box, Container, Typography, Grid, Card, CardContent } from "@mui/material";
+import { Box, Container, Typography, Grid, Card, CardContent, TextField } from "@mui/material";
+import { useState } from "react";
 
 const SendSMSPage = () => {
-  const sendTextMessage = (phoneNumber?: string, message?: string) => {
+  const [message, setMessage] = useState('');
+
+  const sendTextMessage = () => {
     try {
-      let smsUrl = 'sms:';
+      let smsUrl = 'sms:?';
       
-      if (phoneNumber) {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        smsUrl += isIOS ? `${phoneNumber}&` : `${phoneNumber}?`;
-      }
-      
-      if (message) {
+      // Only add the message parameter, let user choose recipient in their SMS app
+      if (message.trim()) {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         smsUrl += isIOS ? `body=${encodeURIComponent(message)}` : `sms=${encodeURIComponent(message)}`;
       }
@@ -43,49 +42,45 @@ const SendSMSPage = () => {
       }}>
         <CardContent>
           <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-            برای تست ارسال پیامک، یکی از گزینه‌های زیر را انتخاب کنید
+            متن پیام خود را وارد کنید
           </Typography>
           
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <button
-                onClick={() => sendTextMessage('09123456789', 'سلام از اپلیکیشن دایا')}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  backgroundColor: '#2196f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  marginBottom: '10px',
-                }}
-              >
-                ارسال به اندروید
-              </button>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <button
-                onClick={() => sendTextMessage('+989123456789', 'سلام از اپلیکیشن دایا')}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  backgroundColor: '#000000',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  marginBottom: '10px',
-                }}
-              >
-                ارسال به آیفون
-              </button>
-            </Grid>
-          </Grid>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="پیام خود را اینجا بنویسید..."
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+              }
+            }}
+          />
+
+          <button
+            onClick={sendTextMessage}
+            disabled={!message.trim()}
+            style={{
+              width: '100%',
+              padding: '15px',
+              backgroundColor: message.trim() ? '#2196f3' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: message.trim() ? 'pointer' : 'not-allowed',
+              marginBottom: '10px',
+            }}
+          >
+            ادامه و انتخاب مخاطب
+          </button>
 
           <Box sx={{ mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              توجه: برای ارسال پیامک، برنامه پیام‌رسان پیش‌فرض دستگاه شما باز خواهد شد.
+              توجه: پس از کلیک روی دکمه، برنامه پیام‌رسان باز خواهد شد و می‌توانید مخاطب مورد نظر را انتخاب کنید.
             </Typography>
           </Box>
         </CardContent>
