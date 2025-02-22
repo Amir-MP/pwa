@@ -53,7 +53,9 @@ export default function FaceRecording() {
   const startRecording = () => {
     if (!videoRef.current?.srcObject) return;
     
-    const mediaRecorder = new MediaRecorder(videoRef.current.srcObject as MediaStream);
+    const mediaRecorder = new MediaRecorder(videoRef.current.srcObject as MediaStream, {
+      mimeType: 'video/webm;codecs=vp8,opus'
+    });
     mediaRecorderRef.current = mediaRecorder;
     chunksRef.current = [];
 
@@ -69,11 +71,13 @@ export default function FaceRecording() {
       const a = document.createElement('a');
       a.href = url;
       a.download = 'face-recording.webm';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     };
 
-    mediaRecorder.start();
+    mediaRecorder.start(1000);
     setIsRecording(true);
   };
 
@@ -115,7 +119,7 @@ export default function FaceRecording() {
 
   return (
     <div className={styles.container}>
-      <h1>Face Detection & Recording</h1>
+      <h1 className={styles.title}>Face Detection & Recording</h1>
       <div className={styles.videoContainer}>
         <video
           ref={videoRef}
@@ -123,14 +127,19 @@ export default function FaceRecording() {
           playsInline
           muted
           className={styles.video}
+          onLoadedMetadata={(e) => {
+            if (videoRef.current) {
+              videoRef.current.play();
+            }
+          }}
         />
         <canvas ref={canvasRef} className={styles.canvas} />
       </div>
       <div className={styles.controls}>
-        <p>Face Detected: {faceDetected ? '✅' : '❌'}</p>
+        <p className={styles.status}>Face Detected: {faceDetected ? '✅' : '❌'}</p>
         <button
           onClick={isRecording ? stopRecording : startRecording}
-          className={styles.recordButton}
+          className={`${styles.recordButton} ${isRecording ? styles.recording : ''}`}
         >
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
