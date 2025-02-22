@@ -1,149 +1,151 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
-import styles from './page.module.css';
+import * as faceapi from '@vladmandic/face-api';
 
 export default function FaceRecording() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(30);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const [faceDetected, setFaceDetected] = useState(false);
-  const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        ]);
-        setIsModelLoaded(true);
-        startVideo();
-      } catch (error) {
-        console.error('Error loading models:', error);
-      }
-    };
-
     loadModels();
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => track.stop());
-      }
-    };
   }, []);
 
-  const startVideo = async () => {
+  const loadModels = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true,
-        audio: true 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
+      const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      ]);
+      setIsModelLoaded(true);
+      console.log('Models loaded successfully');
+    } catch (err) {
+      console.error("Error loading models:", err);
     }
   };
 
-  const startRecording = () => {
-    if (!videoRef.current?.srcObject) return;
-    
-    const mediaRecorder = new MediaRecorder(videoRef.current.srcObject as MediaStream, {
-      mimeType: 'video/webm;codecs=vp8,opus'
-    });
-    mediaRecorderRef.current = mediaRecorder;
-    chunksRef.current = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunksRef.current.push(event.data);
+  const startVideo = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    };
+    } catch (err) {
+      console.error("Error accessing webcam:", err);
+    }
+  };
 
+  const startRecording = async () => {
+    if (!videoRef.current || !isModelLoaded) return;
+    
+    const stream = videoRef.current.srcObject as MediaStream;
+    const mediaRecorder = new MediaRecorder(stream);
+    const chunks: BlobPart[] = [];
+
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'face-recording.webm';
-      document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     };
 
-    mediaRecorder.start(1000);
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
     setIsRecording(true);
+    setTimeLeft(30);
+
+    // Start face detection
+    detectFace();
+
+    // Stop recording after 30 seconds
+    setTimeout(() => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+    }, 30000);
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
+  const detectFace = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
 
-  useEffect(() => {
-    if (!isModelLoaded || !videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
 
-    const detectFace = async () => {
-      if (!videoRef.current || !canvasRef.current) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const detectFaces = async () => {
+      if (!isRecording) return;
 
       const detections = await faceapi
-        .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks();
 
-      setFaceDetected(detections.length > 0);
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        faceapi.draw.drawDetections(canvas, detections);
+        faceapi.draw.drawFaceLandmarks(canvas, detections);
+      }
 
-      const canvas = canvasRef.current;
-      const displaySize = {
-        width: videoRef.current.videoWidth,
-        height: videoRef.current.videoHeight
-      };
-      faceapi.matchDimensions(canvas, displaySize);
-
-      const resizedDetections = faceapi.resizeResults(detections, displaySize);
-      canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
-      faceapi.draw.drawDetections(canvas, resizedDetections);
-      faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      requestAnimationFrame(detectFaces);
     };
 
-    const interval = setInterval(detectFace, 100);
-    return () => clearInterval(interval);
-  }, [isModelLoaded]);
+    detectFaces();
+  };
+
+  // Update timer
+  useEffect(() => {
+    if (isRecording && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isRecording, timeLeft]);
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Face Detection & Recording</h1>
-      <div className={styles.videoContainer}>
+    <div className="flex flex-col items-center p-4">
+      <h1 className="text-2xl mb-4">Face Recording</h1>
+      <div className="relative">
         <video
           ref={videoRef}
           autoPlay
-          playsInline
           muted
-          className={styles.video}
-          onLoadedMetadata={(e) => {
-            if (videoRef.current) {
-              videoRef.current.play();
-            }
-          }}
+          onPlay={startVideo}
+          className="w-[640px] h-[480px]"
         />
-        <canvas ref={canvasRef} className={styles.canvas} />
+        <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 w-[640px] h-[480px]"
+        />
       </div>
-      <div className={styles.controls}>
-        <p className={styles.status}>Face Detected: {faceDetected ? '✅' : '❌'}</p>
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`${styles.recordButton} ${isRecording ? styles.recording : ''}`}
-        >
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
+      <div className="mt-4">
+        {!isRecording ? (
+          <button
+            onClick={startRecording}
+            disabled={!isModelLoaded}
+            className={`px-4 py-2 rounded ${
+              isModelLoaded 
+                ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {isModelLoaded ? 'Start Recording' : 'Loading Models...'}
+          </button>
+        ) : (
+          <div className="text-xl">Recording: {timeLeft}s remaining</div>
+        )}
       </div>
     </div>
   );
-} 
+}
