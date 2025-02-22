@@ -23,8 +23,6 @@ import {
   Home,
 } from "@mui/icons-material";
 import ThemeToggle from "./ThemeToggle";
-import { useState } from 'react';
-import { subscribeToPushNotifications } from '@/utils/pushNotification';
 
 // Navigation configuration
 const NAVIGATION_ITEMS = {
@@ -39,7 +37,7 @@ const NAVIGATION_ITEMS = {
     { name: "اسکن QR", icon: <QrCodeIcon />, href: "/qr-code" },
     { name: "اثر انگشت", icon: <FingerprintIcon />, href: "/finger-print" },
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
-    { name: "سایر خدمات", icon: <MedicalIcon />, href: "/push-notification" },
+    { name: "سایر خدمات", icon: <MedicalIcon />, href: "/notifications" },
   ],
   quickAccess: [
     { name: "درخواست ها", icon: <RequestIcon />, href: "/requests" },
@@ -153,29 +151,6 @@ const BottomNav = () => {
 };
 
 export default function HomePage() {
-  const [isSubscribed, setIsSubscribed] = useState(false);
-
-  const handleSubscribe = async () => {
-    try {
-      if (!('Notification' in window)) {
-        alert('This browser does not support notifications');
-        return;
-      }
-
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert('Permission for notifications was denied');
-        return;
-      }
-
-      await subscribeToPushNotifications();
-      setIsSubscribed(true);
-    } catch (error) {
-      console.error('Error:', error);
-      alert('There was an error subscribing to push notifications');
-    }
-  };
-
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       {/* Navbar */}
@@ -276,13 +251,6 @@ export default function HomePage() {
             </Grid>
           ))}
         </Grid>
-
-        <button
-          onClick={handleSubscribe}
-          disabled={isSubscribed}
-        >
-          {isSubscribed ? 'Notifications Enabled' : 'Enable Push Notifications'}
-        </button>
       </Container>
 
       {/* Bottom Navigation */}

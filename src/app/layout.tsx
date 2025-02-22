@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ThemeRegistry from '@/components/ThemeRegistery';
-import localFont from 'next/font/local'
+import ThemeRegistry from "@/components/ThemeRegistery";
+import localFont from "next/font/local";
+import { NotificationProvider } from "@/notifications/useNotification";
 
 const APP_NAME = "PWA App";
 const APP_DEFAULT_TITLE = "My Awesome PWA App";
@@ -19,9 +20,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 const myFont = localFont({
-  src: '../../public/iransansx/fonts/woff/IRANSansX-Regular.woff',
-  display: 'swap',
-})
+  src: "../../public/iransansx/fonts/woff/IRANSansX-Regular.woff",
+  display: "swap",
+});
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
@@ -68,9 +69,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" dir="rtl">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${myFont.className} antialiased`}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${myFont.className} antialiased`}
+      >
         <ThemeRegistry>
-        {children}
+          <NotificationProvider> {children}</NotificationProvider>
         </ThemeRegistry>
       </body>
     </html>
