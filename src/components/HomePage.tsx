@@ -20,10 +20,11 @@ import {
   RequestPage as RequestIcon,
   DirectionsCar as CarIcon,
   Person as PersonIcon,
-  Receipt as BillIcon,
   Home,
 } from "@mui/icons-material";
 import ThemeToggle from "./ThemeToggle";
+import { useState } from 'react';
+import { subscribeToPushNotifications } from '@/utils/pushNotification';
 
 // Navigation configuration
 const NAVIGATION_ITEMS = {
@@ -38,9 +39,7 @@ const NAVIGATION_ITEMS = {
     { name: "اسکن QR", icon: <QrCodeIcon />, href: "/qr-code" },
     { name: "اثر انگشت", icon: <FingerprintIcon />, href: "/finger-print" },
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
-    { name: "تصویر برداری", icon: <PersonIcon />, href: "/notification" },
-    { name: "قبوض", icon: <BillIcon />, href: "/bills" },
-    { name: "سایر خدمات", icon: <MedicalIcon />, href: "/other-services" },
+    { name: "سایر خدمات", icon: <MedicalIcon />, href: "/push-notification" },
   ],
   quickAccess: [
     { name: "درخواست ها", icon: <RequestIcon />, href: "/requests" },
@@ -140,7 +139,6 @@ const BottomNav = () => {
               textDecoration: "none",
               flex: 1,
               height: "100%", // Added this
-             
             }}
           >
             {item.icon}
@@ -155,6 +153,29 @@ const BottomNav = () => {
 };
 
 export default function HomePage() {
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleSubscribe = async () => {
+    try {
+      if (!('Notification' in window)) {
+        alert('This browser does not support notifications');
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Permission for notifications was denied');
+        return;
+      }
+
+      await subscribeToPushNotifications();
+      setIsSubscribed(true);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('There was an error subscribing to push notifications');
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       {/* Navbar */}
@@ -176,8 +197,8 @@ export default function HomePage() {
         <Card
           sx={{
             mb: 1,
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
+            background: "rgba(255, 255, 255, 0.1)",
+            backdropFilter: "blur(10px)",
             borderRadius: 2,
             position: "relative",
             overflow: "hidden",
@@ -208,7 +229,6 @@ export default function HomePage() {
               >
                 کیف پول کاور
               </Typography>
-             
             </Box>
             <Typography
               variant="h4"
@@ -256,6 +276,13 @@ export default function HomePage() {
             </Grid>
           ))}
         </Grid>
+
+        <button
+          onClick={handleSubscribe}
+          disabled={isSubscribed}
+        >
+          {isSubscribed ? 'Notifications Enabled' : 'Enable Push Notifications'}
+        </button>
       </Container>
 
       {/* Bottom Navigation */}

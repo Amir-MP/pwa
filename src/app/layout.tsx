@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeRegistry from '@/components/ThemeRegistery';
 import localFont from 'next/font/local'
-import { NotificationProvider } from "@/notifications/useNotification";
 
 const APP_NAME = "PWA App";
 const APP_DEFAULT_TITLE = "My Awesome PWA App";
@@ -71,9 +70,7 @@ export default function RootLayout({
     <html lang="en" dir="rtl">
       <body className={`${geistSans.variable} ${geistMono.variable} ${myFont.className} antialiased`}>
         <ThemeRegistry>
-        <NotificationProvider>
         {children}
-        </NotificationProvider>
         </ThemeRegistry>
       </body>
     </html>
