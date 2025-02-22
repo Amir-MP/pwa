@@ -281,53 +281,7 @@ const HomePage = () => {
           ))}
         </Grid>
 
-        {/* SMS Test Section */}
-        <Card sx={{ 
-          mb: 2,
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(10px)",
-          borderRadius: 2,
-        }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
-              تست ارسال پیامک
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <button
-                  onClick={() => sendTextMessage('09123456789', 'سلام از اپلیکیشن دایا')}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    backgroundColor: '#2196f3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  ارسال به اندروید
-                </button>
-              </Grid>
-              <Grid item xs={6}>
-                <button
-                  onClick={() => sendTextMessage('+989123456789', 'سلام از اپلیکیشن دایا')}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    backgroundColor: '#000000',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  ارسال به آیفون
-                </button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+ 
       </Container>
 
       {/* Bottom Navigation */}
