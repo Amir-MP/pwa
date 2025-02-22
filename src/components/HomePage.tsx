@@ -38,7 +38,7 @@ const NAVIGATION_ITEMS = {
     { name: "اسکن QR", icon: <QrCodeIcon />, href: "/qr-code" },
     { name: "اثر انگشت", icon: <FingerprintIcon />, href: "/finger-print" },
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
-    { name: "تصویر برداری", icon: <PersonIcon />, href: "/scan-image" },
+    { name: "تصویر برداری", icon: <PersonIcon />, href: "/notification" },
     { name: "قبوض", icon: <BillIcon />, href: "/bills" },
     { name: "سایر خدمات", icon: <MedicalIcon />, href: "/other-services" },
   ],
