@@ -53,10 +53,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const handleSubscribe = async () => {
-    // Get the VAPID public key from environment variable
-    const response = await fetch("/api/web-push/vapid-public-key");
-    const { publicKey } = await response.json();
-
     const onSubscribe = (subscription: PushSubscription | null) => {
       if (subscription) {
         setIsSubscribed(true);
@@ -74,7 +70,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       setErrorMessage(e?.message);
     };
 
-    registerAndSubscribe(onSubscribe, onError, publicKey);
+    registerAndSubscribe(onSubscribe, onError);
   };
 
   const contextValue = useMemo(

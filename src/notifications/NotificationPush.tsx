@@ -1,13 +1,16 @@
 export const registerAndSubscribe = async (
     onSubscribe: (subscription: PushSubscription | null) => void,
-    onError: (error: Error) => void,
-    applicationServerKey: string
+    onError: (error: Error) => void
 ) => {
     try {
+        // Fetch the VAPID key internally
+        const response = await fetch("/api/web-push/vapid-public-key");
+        const { publicKey } = await response.json();
+
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey,
+            applicationServerKey: publicKey,
         });
         onSubscribe(subscription);
     } catch (e) {
