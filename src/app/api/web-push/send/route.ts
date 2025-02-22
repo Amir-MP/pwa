@@ -1,11 +1,16 @@
 import { NextRequest } from "next/server";
-import webpush from 'web-push';
+import webPush from 'web-push';
 
-// Initialize webpush with VAPID details
-webpush.setVapidDetails(
-    'mailto:amir.re6@gmail.com',  // Replace with your email
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
+const vapidDetails = {
+  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  privateKey: process.env.VAPID_PRIVATE_KEY!,
+  subject: process.env.VAPID_SUBJECT!
+};
+
+webPush.setVapidDetails(
+  vapidDetails.subject,
+  vapidDetails.publicKey,
+  vapidDetails.privateKey
 );
 
 export async function POST(req: NextRequest) {
@@ -17,7 +22,7 @@ export async function POST(req: NextRequest) {
             message
         });
 
-        await webpush.sendNotification(subscription, payload);
+        await webPush.sendNotification(subscription, payload);
         
         return new Response(JSON.stringify({ message: "Push sent." }), {
             status: 200,

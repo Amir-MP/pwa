@@ -6,6 +6,8 @@ const sendDeliveryReportAction = () => {
     console.log("Web push delivered.");
 };
 
+const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
 self.addEventListener("push", function (event) {
     if (!event.data) {
         return;
