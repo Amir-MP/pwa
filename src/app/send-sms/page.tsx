@@ -3,25 +3,33 @@ import { Box, Container, Typography, Grid, Card, CardContent, TextField } from "
 import { useState } from "react";
 
 const SendSMSPage = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('سلام');
 
-  const sendTextMessage = () => {
+  const sendTextMessage = async () => {
     try {
-      let smsUrl = 'sms:?';
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       
-      // Only add the message parameter, let user choose recipient in their SMS app
-      if (message.trim()) {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        smsUrl += isIOS ? `body=${encodeURIComponent(message)}` : `sms=${encodeURIComponent(message)}`;
-      }
+      // Try SMS URL first
+      let smsUrl = isIOS 
+        ? `sms:&body=${encodeURIComponent(message)}`
+        : `sms:?body=${encodeURIComponent(message)}`;
 
-      // Check if running in a PWA environment
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        window.location.href = smsUrl;
-      } else {
-        // If not in PWA, open in new tab
-        window.open(smsUrl, '_blank');
-      }
+      // Try to open SMS app
+      window.location.href = smsUrl;
+
+      // If SMS URL doesn't work, try Web Share API as fallback
+      setTimeout(async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              text: message
+            });
+          }
+        } catch (shareError) {
+          console.error('Share failed:', shareError);
+        }
+      }, 500);
+
     } catch (error) {
       console.error('Error opening messaging app:', error);
       alert('خطا در باز کردن برنامه پیام رسان. لطفا دوباره تلاش کنید.');
