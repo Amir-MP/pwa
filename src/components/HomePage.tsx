@@ -21,6 +21,7 @@ import {
   DirectionsCar as CarIcon,
   Person as PersonIcon,
   Home,
+  Message as MessageIcon,
 } from "@mui/icons-material";
 import ThemeToggle from "./ThemeToggle";
 
@@ -37,6 +38,7 @@ const NAVIGATION_ITEMS = {
     { name: "اسکن QR", icon: <QrCodeIcon />, href: "/qr-code" },
     { name: "اثر انگشت", icon: <FingerprintIcon />, href: "/finger-print" },
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
+    { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
     { name: "سایر خدمات", icon: <MedicalIcon />, href: "/notifications" },
   ],
   quickAccess: [
@@ -150,7 +152,34 @@ const BottomNav = () => {
   );
 };
 
-export default function HomePage() {
+const HomePage = () => {
+  const sendTextMessage = (phoneNumber?: string, message?: string) => {
+    try {
+      let smsUrl = 'sms:';
+      
+      if (phoneNumber) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        smsUrl += isIOS ? `${phoneNumber}&` : `${phoneNumber}?`;
+      }
+      
+      if (message) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        smsUrl += isIOS ? `body=${encodeURIComponent(message)}` : `sms=${encodeURIComponent(message)}`;
+      }
+
+      // Check if running in a PWA environment
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        window.location.href = smsUrl;
+      } else {
+        // If not in PWA, open in new tab
+        window.open(smsUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening messaging app:', error);
+      alert('خطا در باز کردن برنامه پیام رسان. لطفا دوباره تلاش کنید.');
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       {/* Navbar */}
@@ -251,10 +280,60 @@ export default function HomePage() {
             </Grid>
           ))}
         </Grid>
+
+        {/* SMS Test Section */}
+        <Card sx={{ 
+          mb: 2,
+          background: "rgba(255, 255, 255, 0.1)",
+          backdropFilter: "blur(10px)",
+          borderRadius: 2,
+        }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
+              تست ارسال پیامک
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <button
+                  onClick={() => sendTextMessage('09123456789', 'سلام از اپلیکیشن دایا')}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#2196f3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ارسال به اندروید
+                </button>
+              </Grid>
+              <Grid item xs={6}>
+                <button
+                  onClick={() => sendTextMessage('+989123456789', 'سلام از اپلیکیشن دایا')}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#000000',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ارسال به آیفون
+                </button>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
       </Container>
 
       {/* Bottom Navigation */}
       <BottomNav />
     </Box>
   );
-}
+};
+
+export default HomePage;
