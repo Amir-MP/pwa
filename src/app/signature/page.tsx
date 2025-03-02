@@ -54,9 +54,10 @@ export default function Signature() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-      <h1 className="text-3xl font-bold text-white mb-8">امضا الکترونیکی</h1>
+  return (  
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="p-10 rounded-xl shadow-lg max-w-sm w-full backdrop-blur-md bg-white/10 border border-white/20">
+        <h1 className="text-2xl font-bold text-center mb-6">امضا الکترونیکی</h1>
 
       <div
         ref={containerRef}
@@ -99,8 +100,9 @@ export default function Signature() {
             alt="Saved signature"
             className="max-w-[500px] p-2 rounded"
           />
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
