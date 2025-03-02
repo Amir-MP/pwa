@@ -4,85 +4,92 @@ import { useState, useEffect } from 'react';
 
 interface SMS {
   body: string;
-  date: number;
+  timestamp: number;
 }
 
 export default function SMSReader() {
   const [smsMessages, setSmsMessages] = useState<SMS[]>([]);
-  const [balanceInfo, setBalanceInfo] = useState<string[]>([]);
-  const [error, setError] = useState<string>('');
+  const [extractedNumbers, setExtractedNumbers] = useState<string[]>([]);
 
-  const readSMS = async () => {
+  // Function to extract 5-digit numbers from text
+  const extract5DigitNumbers = (text: string): string[] => {
+    const regex = /\b\d{5}\b/g;
+    return text.match(regex) || [];
+  };
+
+  // Function to handle incoming SMS
+  const handleIncomingSMS = async () => {
     try {
+      // Check if SMS permission is available
       if (!('sms' in navigator)) {
-        throw new Error('SMS API is not supported in this browser/device');
+        throw new Error('SMS API is not supported in this browser');
       }
 
-      // @ts-ignore - SMS API types are not included in TypeScript
-      const messages = await navigator.sms.receive();
-      setSmsMessages(messages);
-
-      // Filter messages containing "مانده"
-      const balances = messages
-        .map(msg => {
-          const match = msg.body.match(/مانده:[\d,]+/g);
-          return match ? match[0] : null;
-        })
-        .filter(Boolean) as string[];
-
-      setBalanceInfo(balances);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to read SMS messages');
+      // Request SMS permission
+      // Note: This is a proposed API and may not be widely supported
+      // @ts-ignore - SMS API is experimental
+      const permission = await navigator.permissions.query({ name: 'sms-receive' });
+      
+      if (permission.state === 'granted') {
+        // @ts-ignore - SMS API is experimental
+        navigator.sms.addEventListener('receive', (event: any) => {
+          const newSMS: SMS = {
+            body: event.message.body,
+            timestamp: Date.now(),
+          };
+          
+          setSmsMessages(prev => [...prev, newSMS]);
+          
+          // Extract 5-digit numbers from the new message
+          const numbers = extract5DigitNumbers(newSMS.body);
+          if (numbers.length > 0) {
+            setExtractedNumbers(prev => [...prev, ...numbers]);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error accessing SMS:', error);
     }
   };
 
   useEffect(() => {
-    // Request permission and read SMS when component mounts
-    const requestPermission = async () => {
-      try {
-        // @ts-ignore - SMS API types are not included in TypeScript
-        const permission = await navigator.permissions.query({ name: 'sms-receive' });
-        if (permission.state === 'granted') {
-          readSMS();
-        } else {
-          setError('Permission to read SMS was denied');
-        }
-      } catch (err) {
-        setError('SMS permission is not supported in this browser/device');
-      }
-    };
-
-    requestPermission();
+    handleIncomingSMS();
   }, []);
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">SMS Reader</h1>
       
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Extracted 5-Digit Numbers</h2>
+        {extractedNumbers.length > 0 ? (
+          <ul className="list-disc pl-4">
+            {extractedNumbers.map((number, index) => (
+              <li key={index}>{number}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No 5-digit numbers found yet</p>
+        )}
+      </div>
 
-      {balanceInfo.length > 0 ? (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Balance Information:</h2>
-          {balanceInfo.map((balance, index) => (
-            <div 
-              key={index}
-              className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
-              dir="rtl"
-            >
-              {balance}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-600">
-          {error ? '' : 'No balance information found in SMS messages'}
-        </p>
-      )}
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Recent Messages</h2>
+        {smsMessages.length > 0 ? (
+          <ul className="space-y-2">
+            {smsMessages.map((sms, index) => (
+              <li key={index} className="p-2 bg-gray-100 rounded">
+                <p>{sms.body}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(sms.timestamp).toLocaleString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No messages received yet</p>
+        )}
+      </div>
     </div>
   );
 }
