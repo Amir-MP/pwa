@@ -40,6 +40,7 @@ const NAVIGATION_ITEMS = {
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
     { name: "ضبط ویدئو", icon: <MedicalIcon />, href: "/face-recording" },
     { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
+    { name: "خواندن پیامک", icon: <MessageIcon />, href: "/sms-reader" },
   ],
   quickAccess: [
     { name: "درخواست ها (بزودی)", icon: <RequestIcon />, href: "/requests" },
@@ -134,11 +135,11 @@ const BottomNav = () => {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center", // Added this
+              justifyContent: "center",
               color: pathname === item.href ? "primary.main" : "text.secondary",
               textDecoration: "none",
               flex: 1,
-              height: "100%", // Added this
+              height: "100%",
             }}
           >
             {item.icon}
@@ -169,11 +170,9 @@ const HomePage = () => {
           : `sms=${encodeURIComponent(message)}`;
       }
 
-      // Check if running in a PWA environment
       if (window.matchMedia("(display-mode: standalone)").matches) {
         window.location.href = smsUrl;
       } else {
-        // If not in PWA, open in new tab
         window.open(smsUrl, "_blank");
       }
     } catch (error) {
@@ -215,12 +214,48 @@ const HomePage = () => {
               right: 0,
               bottom: 0,
               left: 0,
-              background:
-                "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1), transparent 40%)",
+              background: "linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%)",
+              backgroundSize: "200% 200%",
+              animation: "gradient 3s ease infinite",
+            },
+            "@keyframes gradient": {
+              "0%": {
+                backgroundPosition: "0% 50%",
+              },
+              "50%": {
+                backgroundPosition: "100% 50%",
+              },
+              "100%": {
+                backgroundPosition: "0% 50%",
+              },
+            },
+            transition: "transform 0.3s ease-in-out",
+            "&:hover": {
+              transform: "scale(1.02)",
             },
           }}
         >
-          <CardContent sx={{ position: "relative" }}>
+          <CardContent 
+            sx={{ 
+              position: "relative",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1), transparent 70%)",
+                opacity: 0.5,
+                animation: "pulse 2s ease-in-out infinite",
+              },
+              "@keyframes pulse": {
+                "0%": { opacity: 0.3 },
+                "50%": { opacity: 0.6 },
+                "100%": { opacity: 0.3 },
+              }
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
