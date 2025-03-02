@@ -107,7 +107,9 @@ export default function QRCodeScanner() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="p-10 rounded-xl shadow-lg max-w-sm w-full backdrop-blur-md bg-white/10 border border-white/20">
-        <h1 className="text-2xl font-bold text-center mb-6">اسکنر QR Code</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">
+          اسکنر QR Code
+        </h1>
 
         <div
           id="qr-reader"
@@ -123,19 +125,12 @@ export default function QRCodeScanner() {
             >
               شروع اسکن
             </button>
-            {isScanning && (
-              <button
-                onClick={stopScanning}
-                className="mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
-              >
-                متوقف کردن اسکن
-              </button>
-            )}
-            <div className="text-center ">
+
+            <div className="text-center">
               <label className="block text-sm text-gray-600 mb-2 pb-2">
                 یا بارگذاری یک تصویر QR Code
               </label>
-              <label className=" cursor-pointer bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors border border-gray-300">
+              <label className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors border border-gray-300">
                 بارگذاری تصویر
                 <input
                   type="file"
@@ -145,6 +140,17 @@ export default function QRCodeScanner() {
                 />
               </label>
             </div>
+          </div>
+        )}
+
+        {isScanning && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={stopScanning}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
+            >
+              متوقف کردن اسکن
+            </button>
           </div>
         )}
       </div>
