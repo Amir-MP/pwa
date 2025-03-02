@@ -10,9 +10,11 @@ export default function FaceRecordingComponent() {
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [isStreamReady, setIsStreamReady] = useState(false);
 
   useEffect(() => {
     loadModels();
+    startVideo(); // Start video stream when component mounts
   }, []);
 
   const loadModels = async () => {
@@ -39,6 +41,8 @@ export default function FaceRecordingComponent() {
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await videoRef.current.play(); // Ensure video starts playing
+        setIsStreamReady(true);
       }
     } catch (err) {
       console.error("Error accessing webcam:", err);
@@ -77,40 +81,49 @@ export default function FaceRecordingComponent() {
   };
 
   const startRecording = async () => {
-    if (!videoRef.current || !isModelLoaded) return;
+    if (!videoRef.current || !isModelLoaded || !isStreamReady) return;
     
     const stream = videoRef.current.srcObject as MediaStream;
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9'
-    });
-    const chunks: BlobPart[] = [];
+    if (!stream) {
+      console.error("No media stream available");
+      return;
+    }
 
-    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `face-recording-${new Date().toISOString()}.webm`;
-      a.click();
-      setIsRecording(false);
+    try {
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
+      const chunks: BlobPart[] = [];
+
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `face-recording-${new Date().toISOString()}.webm`;
+        a.click();
+        setIsRecording(false);
+        setTimeLeft(30);
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
       setTimeLeft(30);
-    };
 
-    mediaRecorderRef.current = mediaRecorder;
-    mediaRecorder.start();
-    setIsRecording(true);
-    setTimeLeft(30);
+      // Start face detection
+      detectFace();
 
-    // Start face detection
-    detectFace();
-
-    // Stop recording after 30 seconds
-    setTimeout(() => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-    }, 30000);
+      // Stop recording after 30 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 30000);
+    } catch (err) {
+      console.error("Error starting recording:", err);
+    }
   };
 
   // Update timer
@@ -145,7 +158,6 @@ export default function FaceRecordingComponent() {
           autoPlay
           playsInline
           muted
-          onPlay={startVideo}
           className="w-[640px] h-[480px] bg-gray-200"
         />
         <canvas
@@ -157,14 +169,18 @@ export default function FaceRecordingComponent() {
         {!isRecording ? (
           <button
             onClick={startRecording}
-            disabled={!isModelLoaded}
+            disabled={!isModelLoaded || !isStreamReady}
             className={`px-4 py-2 rounded ${
-              isModelLoaded 
+              isModelLoaded && isStreamReady
                 ? 'bg-blue-500 text-white hover:bg-blue-600' 
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {isModelLoaded ? 'Start Recording' : 'Loading Models...'}
+            {!isModelLoaded 
+              ? 'Loading Models...' 
+              : !isStreamReady 
+                ? 'Starting Camera...'
+                : 'Start Recording'}
           </button>
         ) : (
           <div className="text-xl font-semibold text-blue-600">
