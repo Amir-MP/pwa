@@ -10,65 +10,70 @@ interface SMS {
 export default function SMSReader() {
   const [smsMessages, setSmsMessages] = useState<SMS[]>([]);
   const [extractedNumbers, setExtractedNumbers] = useState<string[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
 
   // Function to extract 5-digit numbers from text
   const extract5DigitNumbers = (text: string): string[] => {
     const regex = /\b\d{5}\b/g;
-    return text.match(regex) || [];
+    const matches = text.match(regex) || [];
+    console.log('Extracted numbers:', matches); // Debug log
+    return matches;
   };
 
-  // Function to handle incoming SMS
-  const handleIncomingSMS = async () => {
-    try {
-      // Check if SMS permission is available
-      if (!('sms' in navigator)) {
-        throw new Error('SMS API is not supported in this browser');
-      }
-
-      // Request SMS permission
-      // @ts-ignore - SMS API is experimental
-      const permission = await navigator.permissions.query({ name: 'sms-receive' });
-      
-      if (permission.state === 'granted') {
-        // @ts-ignore - SMS API is experimental
-        navigator.sms.watch((message: { content: string }) => {
-          console.log('Received SMS:', message); // Debug log
-          
-          const newSMS: SMS = {
-            body: message.content,
-            timestamp: Date.now(),
-          };
-          
-          setSmsMessages(prev => [...prev, newSMS]);
-          
-          // Extract 5-digit numbers from the new message
-          const numbers = extract5DigitNumbers(message.content);
-          console.log('Extracted numbers:', numbers); // Debug log
-          
-          if (numbers.length > 0) {
-            setExtractedNumbers(prev => [...prev, ...numbers]);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error accessing SMS:', error);
+  // Function to handle new message
+  const handleNewMessage = (messageText: string) => {
+    const newSMS: SMS = {
+      body: messageText,
+      timestamp: Date.now(),
+    };
+    
+    setSmsMessages(prev => [...prev, newSMS]);
+    
+    // Extract 5-digit numbers from the new message
+    const numbers = extract5DigitNumbers(messageText);
+    if (numbers.length > 0) {
+      setExtractedNumbers(prev => [...prev, ...numbers]);
     }
   };
 
-  useEffect(() => {
-    handleIncomingSMS();
-  }, []);
+  // Test function to add a message
+  const handleTestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputMessage.trim()) {
+      handleNewMessage(inputMessage);
+      setInputMessage('');
+    }
+  };
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">SMS Reader</h1>
+      
+      {/* Test input form */}
+      <form onSubmit={handleTestSubmit} className="mb-6">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Enter test message"
+            className="flex-1 p-2 border rounded"
+          />
+          <button 
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Test Message
+          </button>
+        </div>
+      </form>
       
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Extracted 5-Digit Numbers</h2>
         {extractedNumbers.length > 0 ? (
           <ul className="list-disc pl-4">
             {extractedNumbers.map((number, index) => (
-              <li key={index}>{number}</li>
+              <li key={index} className="text-lg text-blue-600">{number}</li>
             ))}
           </ul>
         ) : (
