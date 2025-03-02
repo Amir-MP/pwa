@@ -26,22 +26,25 @@ export default function SMSReader() {
       }
 
       // Request SMS permission
-      // Note: This is a proposed API and may not be widely supported
       // @ts-ignore - SMS API is experimental
       const permission = await navigator.permissions.query({ name: 'sms-receive' });
       
       if (permission.state === 'granted') {
         // @ts-ignore - SMS API is experimental
-        navigator.sms.addEventListener('receive', (event: any) => {
+        navigator.sms.watch((message: { content: string }) => {
+          console.log('Received SMS:', message); // Debug log
+          
           const newSMS: SMS = {
-            body: event.message.body,
+            body: message.content,
             timestamp: Date.now(),
           };
           
           setSmsMessages(prev => [...prev, newSMS]);
           
           // Extract 5-digit numbers from the new message
-          const numbers = extract5DigitNumbers(newSMS.body);
+          const numbers = extract5DigitNumbers(message.content);
+          console.log('Extracted numbers:', numbers); // Debug log
+          
           if (numbers.length > 0) {
             setExtractedNumbers(prev => [...prev, ...numbers]);
           }
