@@ -151,7 +151,7 @@ export default function FaceRecordingComponent() {
 
   return (
     <div className="flex flex-col items-center p-4">
-      <h1 className="text-2xl mb-4">Face Recording</h1>
+      <h1 className="text-2xl mb-4">ضبط تصویر</h1>
       <div className="relative">
         <video
           ref={videoRef}
@@ -164,6 +164,14 @@ export default function FaceRecordingComponent() {
           ref={canvasRef}
           className="absolute top-0 left-0 w-[640px] h-[480px]"
         />
+        {/* Face guide overlay */}
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
+          <div className="w-[300px] h-[400px] border-4 border-blue-400 rounded-full opacity-50 flex items-center justify-center">
+            <div className="text-blue-600 text-sm bg-white/80 px-2 py-1 rounded">
+              صورت خود را در این قسمت قرار دهید
+            </div>
+          </div>
+        </div>
       </div>
       <div className="mt-4">
         {!isRecording ? (
@@ -177,14 +185,14 @@ export default function FaceRecordingComponent() {
             }`}
           >
             {!isModelLoaded 
-              ? 'Loading Models...' 
+              ? 'درحال بارگذاری مدل...' 
               : !isStreamReady 
-                ? 'Starting Camera...'
-                : 'Start Recording'}
+                ? 'درحال راه اندازی دوربین...'
+                : 'ضبط شروع شد'}
           </button>
         ) : (
           <div className="text-xl font-semibold text-blue-600">
-            Recording: {timeLeft}s remaining
+            درحال ضبط: {timeLeft}ثانیه باقی مانده
           </div>
         )}
       </div>
