@@ -38,13 +38,12 @@ const NAVIGATION_ITEMS = {
     { name: "اسکن QR", icon: <QrCodeIcon />, href: "/qr-code" },
     { name: "اثر انگشت", icon: <FingerprintIcon />, href: "/finger-print" },
     { name: "امضا", icon: <SignatureIcon />, href: "/signature" },
-    { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
-    { name: "سایر خدمات", icon: <MedicalIcon />, href: "/notifications" },
     { name: "ضبط ویدئو", icon: <MedicalIcon />, href: "/face-recording" },
+    { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
   ],
   quickAccess: [
-    { name: "درخواست ها", icon: <RequestIcon />, href: "/requests" },
-    { name: "پروفایل", icon: <PersonIcon />, href: "/profile" },
+    { name: "درخواست ها (بزودی)", icon: <RequestIcon />, href: "/requests" },
+    { name: "پروفایل (بزودی)", icon: <PersonIcon />, href: "/profile" },
   ],
 };
 
@@ -156,28 +155,30 @@ const BottomNav = () => {
 const HomePage = () => {
   const sendTextMessage = (phoneNumber?: string, message?: string) => {
     try {
-      let smsUrl = 'sms:';
-      
+      let smsUrl = "sms:";
+
       if (phoneNumber) {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         smsUrl += isIOS ? `${phoneNumber}&` : `${phoneNumber}?`;
       }
-      
+
       if (message) {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        smsUrl += isIOS ? `body=${encodeURIComponent(message)}` : `sms=${encodeURIComponent(message)}`;
+        smsUrl += isIOS
+          ? `body=${encodeURIComponent(message)}`
+          : `sms=${encodeURIComponent(message)}`;
       }
 
       // Check if running in a PWA environment
-      if (window.matchMedia('(display-mode: standalone)').matches) {
+      if (window.matchMedia("(display-mode: standalone)").matches) {
         window.location.href = smsUrl;
       } else {
         // If not in PWA, open in new tab
-        window.open(smsUrl, '_blank');
+        window.open(smsUrl, "_blank");
       }
     } catch (error) {
-      console.error('Error opening messaging app:', error);
-      alert('خطا در باز کردن برنامه پیام رسان. لطفا دوباره تلاش کنید.');
+      console.error("Error opening messaging app:", error);
+      alert("خطا در باز کردن برنامه پیام رسان. لطفا دوباره تلاش کنید.");
     }
   };
 
@@ -236,26 +237,28 @@ const HomePage = () => {
               </Typography>
             </Box>
             <Typography
-              variant="h4"
-              sx={{
-                mb: 3,
-                fontWeight: "bold",
-                textShadow: "0px 2px 4px rgba(0,0,0,0.2)",
-              }}
-            >
-              2,500,000 تومان
-            </Typography>
-            <Typography
               variant="h5"
               sx={{
                 letterSpacing: 4,
                 fontFamily: "monospace",
                 opacity: 0.9,
+                mb: 3,
+                mt: 3,
                 textAlign: "center",
                 textShadow: "0px 2px 4px rgba(0,0,0,0.2)",
               }}
             >
               5282 3456 7890 1289
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                textAlign: "left",
+                fontWeight: "bold",
+                textShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+              }}
+            >
+              2,500,000 تومان
             </Typography>
           </CardContent>
         </Card>
@@ -281,8 +284,6 @@ const HomePage = () => {
             </Grid>
           ))}
         </Grid>
-
- 
       </Container>
 
       {/* Bottom Navigation */}

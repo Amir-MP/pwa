@@ -95,7 +95,7 @@ export default function QRCodeScanner() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">QR Code Scanner</h1>
+      <h1 className="text-2xl font-bold mb-4">اسکنر QR </h1>
       
       <div className="max-w-md mx-auto">
         <div className="mb-4 relative">
@@ -111,15 +111,15 @@ export default function QRCodeScanner() {
                 onClick={startScanning}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
               >
-                Start Scanning
+                شروع اسکن
               </button>
               
               <div className="text-center">
-                <label className="block text-sm text-gray-600 mb-2">Or upload a QR code image</label>
+                <label className="block text-sm text-gray-600 mb-2">یا بارگذاری یک تصویر QR Code</label>
                 <label 
                   className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors border border-gray-300"
                 >
-                  Upload Image
+                  بارگذاری تصویر
                   <input
                     type="file"
                     accept="image/*"
@@ -140,19 +140,19 @@ export default function QRCodeScanner() {
 
         {data && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-            <h2 className="font-bold mb-2">Scanned Result:</h2>
+            <h2 className="font-bold mb-2">نتیجه اسکن:</h2>
             <p className="break-all mb-4">{data}</p>
             <div className="flex gap-2">
               <button
                 onClick={resetScanner}
                 className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
               >
-                Scan Another Code
+                اسکن کد دیگر
               </button>
               <label 
                 className="cursor-pointer bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
               >
-                Upload Another Image
+                بارگذاری تصویر دیگر
                 <input
                   type="file"
                   accept="image/*"
@@ -169,7 +169,7 @@ export default function QRCodeScanner() {
             onClick={stopScanning}
             className="mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
           >
-            Stop Scanning
+            متوقف کردن اسکن
           </button>
         )}
       </div>

@@ -167,9 +167,7 @@ export default function FaceRecordingComponent() {
         {/* Face guide overlay */}
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
           <div className="w-[300px] h-[400px] border-4 border-blue-400 rounded-full opacity-50 flex items-center justify-center">
-            <div className="text-blue-600 text-sm bg-white/80 px-2 py-1 rounded">
-              صورت خود را در این قسمت قرار دهید
-            </div>
+            
           </div>
         </div>
       </div>

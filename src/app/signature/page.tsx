@@ -4,20 +4,18 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
 const SignatureCanvas = dynamic(
-    () => import("react-signature-canvas").then((mod) => mod.default),
-    {
-      ssr: false,
-      loading: () => (
-        <div className="w-full h-[150px] bg-gray-700 rounded-lg" />
-      ),
-    }
-  );
+  () => import("react-signature-canvas").then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-[150px] bg-gray-700 rounded-lg" />,
+  }
+);
 
 export default function Signature() {
-    const signatureRef = useRef<any>(null);
-    const [signatureData, setSignatureData] = useState<string>("");
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [canvasSize, setCanvasSize] = useState({ width: 500, height: 150 }); 
+  const signatureRef = useRef<any>(null);
+  const [signatureData, setSignatureData] = useState<string>("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 500, height: 150 });
 
   const clearSignature = () => {
     if (signatureRef.current) {
@@ -35,8 +33,8 @@ export default function Signature() {
 
     // Add a small delay to ensure the container is properly mounted
     setTimeout(updateCanvasSize, 0);
-    window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    window.addEventListener("resize", updateCanvasSize);
+    return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
 
   const saveSignature = () => {
@@ -44,7 +42,7 @@ export default function Signature() {
       alert("Please provide a signature");
       return;
     }
-  
+
     try {
       // Use toData() instead of getTrimmedCanvas()
       const dataURL = signatureRef.current.toDataURL("image/png");
@@ -58,13 +56,13 @@ export default function Signature() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-    <h1 className="text-3xl font-bold text-white mb-8">Digital Signature</h1>
+      <h1 className="text-3xl font-bold text-white mb-8">امضا الکترونیکی</h1>
 
-    <div 
+      <div
         ref={containerRef}
         className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
       >
-        {canvasSize.width > 0 && (  // Only render canvas when we have a valid width
+        {canvasSize.width > 0 && ( // Only render canvas when we have a valid width
           <SignatureCanvas
             //@ts-ignore
             ref={signatureRef}
@@ -72,13 +70,13 @@ export default function Signature() {
               width: canvasSize.width,
               height: canvasSize.height,
               className: "sigCanvas bg-gray-700 rounded-lg touch-none",
-              style: { width: '100%', height: '100%' }
+              style: { width: "100%", height: "100%" },
             }}
             penColor="white"
           />
         )}
       </div>
-      <div className="mt-4 space-x-4">
+      <div className="mt-4 space-x-4 flex flex-row-reverse">
         <button
           onClick={clearSignature}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
