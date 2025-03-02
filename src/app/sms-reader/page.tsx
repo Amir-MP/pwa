@@ -40,6 +40,7 @@ export default function SMSReader() {
     // Request permission and read SMS when component mounts
     const requestPermission = async () => {
       try {
+        // @ts-ignore - SMS API types are not included in TypeScript
         const permission = await navigator.permissions.query({ name: 'sms-receive' });
         if (permission.state === 'granted') {
           readSMS();
