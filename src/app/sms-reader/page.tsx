@@ -26,7 +26,7 @@ export default function SMSReader() {
           setOtpCode(credential.code)
         }
       } catch (err) {
-        setError('Failed to read OTP: ' + (err instanceof Error ? err.message : String(err)))
+        setError('خطایی رخ داده است: ' + (err instanceof Error ? err.message : String(err)))
       }
     }
 
@@ -35,11 +35,11 @@ export default function SMSReader() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">SMS OTP Reader</h1>
+      <h1 className="text-2xl font-bold mb-4">شناسایی کد OTP از پیامک</h1>
       
       {otpCode && (
         <div className="mb-4">
-          <p>Detected OTP Code: <span className="font-bold">{otpCode}</span></p>
+          <p>کد OTP شناسایی شده: <span className="font-bold text-green-500">{otpCode}</span></p>
         </div>
       )}
 
