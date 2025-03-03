@@ -1,93 +1,64 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-
-interface SMS {
-  body: string;
-  timestamp: number;
-}
-
-declare global {
-  interface Window {
-    Android?: {
-      getLatestSMS?: () => string;
-    };
-  }
-}
+import { useEffect, useState } from 'react'
 
 export default function SMSReader() {
-  const [smsMessages, setSmsMessages] = useState<SMS[]>([]);
-  const [extractedNumbers, setExtractedNumbers] = useState<string[]>([]);
-
-  // Function to extract 5-digit numbers from text
-  const extract5DigitNumbers = (text: string): string[] => {
-    const regex = /\b\d{5}\b/g;
-    const matches = text.match(regex) || [];
-    console.log('Extracted numbers:', matches);
-    return matches;
-  };
-
-  // Function to check for new SMS
-  const checkNewSMS = () => {
-    if (window.Android?.getLatestSMS) {
-      const messageText = window.Android.getLatestSMS();
-      if (messageText) {
-        const newSMS: SMS = {
-          body: messageText,
-          timestamp: Date.now(),
-        };
-        
-        setSmsMessages(prev => [...prev, newSMS]);
-        
-        // Extract 5-digit numbers from the new message
-        const numbers = extract5DigitNumbers(messageText);
-        if (numbers.length > 0) {
-          setExtractedNumbers(prev => [...prev, ...numbers]);
-        }
-      }
-    }
-  };
+  const [otpCode, setOtpCode] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   useEffect(() => {
-    // Check for new SMS every 2 seconds
-    const interval = setInterval(checkNewSMS, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    const readOTP = async () => {
+      if (!('OTPCredential' in window)) {
+        setError('WebOTP is not supported in this browser')
+        return
+      }
+
+      try {
+        const abortController = new AbortController()
+        
+        const credential = await navigator.credentials.get({
+          //@ts-ignore
+          otp: { transport: ['sms'] },
+          signal: abortController.signal
+        }) as OTPCredential
+
+        if (credential && credential.code) {
+          setOtpCode(credential.code)
+        }
+      } catch (err) {
+        setError('Failed to read OTP: ' + (err instanceof Error ? err.message : String(err)))
+      }
+    }
+
+    readOTP()
+  }, [])
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">SMS Reader</h1>
+      <h1 className="text-2xl font-bold mb-4">SMS OTP Reader</h1>
       
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Extracted 5-Digit Numbers</h2>
-        {extractedNumbers.length > 0 ? (
-          <ul className="list-disc pl-4">
-            {extractedNumbers.map((number, index) => (
-              <li key={index} className="text-lg text-blue-600">{number}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>No 5-digit numbers found yet</p>
-        )}
-      </div>
+      {otpCode && (
+        <div className="mb-4">
+          <p>Detected OTP Code: <span className="font-bold">{otpCode}</span></p>
+        </div>
+      )}
 
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Recent Messages</h2>
-        {smsMessages.length > 0 ? (
-          <ul className="space-y-2">
-            {smsMessages.map((sms, index) => (
-              <li key={index} className="p-2 bg-gray-100 rounded">
-                <p>{sms.body}</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(sms.timestamp).toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No messages received yet</p>
-        )}
-      </div>
+      {error && (
+        <div className="text-red-500">
+          <p>{error}</p>
+        </div>
+      )}
     </div>
-  );
+  )
+}
+
+// Add TypeScript interface for OTPCredential since it might not be recognized
+declare global {
+  interface Window {
+    OTPCredential: any
+  }
+  
+  interface OTPCredential extends Credential {
+    code: string
+  }
 }
