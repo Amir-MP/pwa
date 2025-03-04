@@ -17,28 +17,30 @@ export default function SMSReader() {
     setError('')
 
     try {
-      // Create abort controller for timeout
-      const ac = new AbortController()
-      const timeoutId = setTimeout(() => ac.abort(), 60000) // 1 minute timeout
+      const abortController = new AbortController()
 
-      // Request OTP
-      const otp = await navigator.credentials.get({
-        //@ts-ignore
+      // Use the WebOTP API directly
+      const result = await (window as any).OTPCredential.receive({
         otp: { transport: ['sms'] },
-        signal: ac.signal
+        signal: abortController.signal
       })
 
-      clearTimeout(timeoutId)
+      console.log('SMS Result:', result)
 
-      //@ts-ignore
-      if (otp?.code) {
-        //@ts-ignore
-        setOtpCode(otp.code)
+      if (result) {
+        // Extract just the numbers from the result
+        const code = result.replace(/\D/g, '')
+        console.log('Extracted code:', code)
+        setOtpCode(code)
       }
 
     } catch (err) {
       console.error('Error reading SMS:', err)
-      setError('خطا در خواندن پیامک')
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('خطا در خواندن پیامک')
+      }
     } finally {
       setIsReading(false)
     }
@@ -46,7 +48,32 @@ export default function SMSReader() {
 
   // Start listening for OTP when component mounts
   useEffect(() => {
-    handleReadOTP()
+    if ('OTPCredential' in window) {
+      // Add event listener for WebOTP
+      const ac = new AbortController()
+      
+      navigator.credentials.get({
+        //@ts-ignore
+        otp: {
+          transport: ['sms']
+        },
+        signal: ac.signal
+      }).then(result => {
+        //@ts-ignore
+        if (result?.code) {
+          //@ts-ignore
+          console.log('OTP received:', result.code)
+          //@ts-ignore
+          setOtpCode(result.code)
+        }
+      }).catch(err => {
+        console.error('OTP Error:', err)
+      })
+
+      return () => {
+        ac.abort()
+      }
+    }
   }, [])
 
   return (
@@ -87,6 +114,12 @@ export default function SMSReader() {
             کد تایید با موفقیت دریافت شد
           </div>
         )}
+
+        {/* Debug info */}
+        <div className="text-xs text-gray-500">
+          <p>WebOTP supported: {String('OTPCredential' in window)}</p>
+          <p>Current status: {isReading ? 'Reading...' : 'Ready'}</p>
+        </div>
       </div>
     </div>
   )
