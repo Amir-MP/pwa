@@ -5,55 +5,54 @@ import { useEffect, useState, useRef } from 'react'
 export default function SMSReader() {
   const [otpCode, setOtpCode] = useState<string>('')
   const [error, setError] = useState<string>('')
+  const [isReading, setIsReading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    let abortController: AbortController | null = null;
+  const readOTP = async () => {
+    if (!('OTPCredential' in window)) {
+      setError('WebOTP در این مرورگر پشتیبانی نمی شود')
+      return
+    }
 
-    const readOTP = async () => {
-      if (!('OTPCredential' in window)) {
-        setError('WebOTP در این مرورگر پشتیبانی نمی شود')
-        return
-      }
+    setIsReading(true)
+    setError('')
 
-      try {
-        abortController = new AbortController()
-        
-        // Start listening for SMS as soon as the page loads
-        const credential = await navigator.credentials.get({
-          //@ts-ignore
-          otp: {
-            transport: ['sms'],
-            signal: abortController.signal
-          }
-        }) as OTPCredential
+    try {
+      const abortController = new AbortController()
 
-        console.log('Received credential:', credential) // Debug log
-
-        if (credential?.code) {
-          console.log('Received OTP code:', credential.code) // Debug log
-          setOtpCode(credential.code)
+      // Start listening for SMS
+      const credential = await navigator.credentials.get({
+        otp: {
+          transport: ['sms'],
+          signal: abortController.signal
         }
+      }) as any
 
-      } catch (err) {
-        console.error('OTP Error:', err) // Debug log
-        setError('خطایی رخ داده است: ' + (err instanceof Error ? err.message : String(err)))
+      console.log('Received credential:', credential)
+
+      if (credential?.code) {
+        console.log('Received OTP code:', credential.code)
+        setOtpCode(credential.code)
+        if (inputRef.current) {
+          inputRef.current.value = credential.code
+          inputRef.current.focus()
+        }
       }
+    } catch (err) {
+      console.error('OTP Error:', err)
+      setError('خطایی رخ داده است: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setIsReading(false)
     }
+  }
 
-    // Start reading OTP
+  // Start reading OTP when component mounts
+  useEffect(() => {
     readOTP()
-
-    // Cleanup function
-    return () => {
-      if (abortController) {
-        abortController.abort()
-      }
-    }
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, '') // Only allow numbers
+    const value = e.target.value.replace(/[^0-9]/g, '')
     setOtpCode(value)
   }
 
@@ -78,6 +77,14 @@ export default function SMSReader() {
         />
       </div>
 
+      <button 
+        onClick={readOTP}
+        disabled={isReading}
+        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+      >
+        {isReading ? 'در حال خواندن...' : 'خواندن مجدد کد'}
+      </button>
+
       {error && (
         <div className="text-red-500 mt-2">
           <p>{error}</p>
@@ -86,6 +93,7 @@ export default function SMSReader() {
 
       {/* Debug display */}
       <div className="text-sm text-gray-500 mt-2">
+        <p>Status: {isReading ? 'Reading SMS...' : 'Ready'}</p>
         {otpCode && <p>Detected code: {otpCode}</p>}
       </div>
     </div>

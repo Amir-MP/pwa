@@ -70,6 +70,8 @@ export default function RootLayout({
     <html lang="en" dir="rtl">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <meta name="format-detection" content="telephone=no" />
+        
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${myFont.className} antialiased`}
