@@ -64,8 +64,7 @@ export default function SMSReader() {
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, '')
-    setOtpCode(value)
+    setOtpCode(e.target.value)
   }
 
   return (
