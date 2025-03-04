@@ -2,10 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react'
 
-interface WebOTPCredential extends Credential {
-  code: string
-}
-
 export default function SMSReader() {
   const [otpCode, setOtpCode] = useState<string>('')
   const [error, setError] = useState<string>('')
@@ -22,50 +18,40 @@ export default function SMSReader() {
     setError('')
 
     try {
-      const abortController = new AbortController()
+      // Use the WebOTP API
+      const content = await (navigator.credentials as any).get({
+        otp: { transport: ['sms'] }
+      })
 
-      // Start listening for SMS
-      const credential = await (navigator.credentials as any).get({
-        //@ts-ignore - WebOTP API types are not yet in TypeScript
-        otp: {
-          transport: ['sms']
-        },
-        signal: abortController.signal
-      }) as WebOTPCredential
+      console.log('SMS Content:', content)
 
-      console.log('Received credential:', credential)
-
-      if (credential?.code) {
-        console.log('Received OTP code:', credential.code)
-        setOtpCode(credential.code)
+      if (content && 'code' in content) {
+        const code = content.code
+        console.log('Received code:', code)
+        // Update both state and input value
+        setOtpCode(code)
+        // Force update the input value
         if (inputRef.current) {
-          inputRef.current.value = credential.code
-          inputRef.current.focus()
-        }
-      }
-    } catch (err) {
-      console.error('OTP Error:', err)
-      if (err instanceof Error) {
-        // Don't show abort errors to user
-        if (err.name !== 'AbortError') {
-          setError('خطایی رخ داده است: ' + err.message)
+          inputRef.current.value = code
         }
       } else {
-        setError('خطایی رخ داده است')
+        setError('کد OTP دریافت نشد')
       }
+    } catch (err) {
+      console.error('SMS reading error:', err)
+      setError('خطا در خواندن پیامک')
     } finally {
       setIsReading(false)
     }
   }
 
-  // Start reading OTP when component mounts
+  // Start reading when component mounts
   useEffect(() => {
-    readOTP()
+    const startReading = async () => {
+      await readOTP()
+    }
+    startReading()
   }, [])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOtpCode(e.target.value)
-  }
 
   return (
     <div className="p-4">
@@ -79,8 +65,7 @@ export default function SMSReader() {
           type="text"
           className="w-full max-w-xs px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="کد OTP را وارد کنید"
-          value={otpCode}
-          onChange={handleInputChange}
+          defaultValue={otpCode}
           pattern="[0-9]*"
           inputMode="numeric"
           maxLength={6}
@@ -104,8 +89,8 @@ export default function SMSReader() {
 
       {/* Debug display */}
       <div className="text-sm text-gray-500 mt-2">
-        <p>Status: {isReading ? 'Reading SMS...' : 'Ready'}</p>
-        {otpCode && <p>Detected code: {otpCode}</p>}
+        <p>Status: {isReading ? 'در حال خواندن...' : 'آماده'}</p>
+        {otpCode && <p>کد دریافت شده: {otpCode}</p>}
       </div>
     </div>
   )
