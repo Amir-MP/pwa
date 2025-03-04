@@ -8,6 +8,8 @@ export default function SMSReader() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    let abortController: AbortController | null = null;
+
     const readOTP = async () => {
       if (!('OTPCredential' in window)) {
         setError('WebOTP در این مرورگر پشتیبانی نمی شود')
@@ -15,39 +17,44 @@ export default function SMSReader() {
       }
 
       try {
-        const abortController = new AbortController()
+        abortController = new AbortController()
         
         // Start listening for SMS as soon as the page loads
         const credential = await navigator.credentials.get({
           //@ts-ignore
-          otp: { transport: ['sms'] },
-          signal: abortController.signal
+          otp: {
+            transport: ['sms'],
+            signal: abortController.signal
+          }
         }) as OTPCredential
 
-        if (credential && credential.code) {
+        console.log('Received credential:', credential) // Debug log
+
+        if (credential?.code) {
+          console.log('Received OTP code:', credential.code) // Debug log
           setOtpCode(credential.code)
-          // Automatically set the value in input
-          if (inputRef.current) {
-            inputRef.current.value = credential.code
-            // Optional: trigger input focus
-            inputRef.current.focus()
-          }
         }
 
-        // Cleanup abort controller
-        return () => {
-          abortController.abort()
-        }
       } catch (err) {
+        console.error('OTP Error:', err) // Debug log
         setError('خطایی رخ داده است: ' + (err instanceof Error ? err.message : String(err)))
       }
     }
 
+    // Start reading OTP
     readOTP()
-  }, [])
+
+    // Cleanup function
+    return () => {
+      if (abortController) {
+        abortController.abort()
+      }
+    }
+  }, []) // Empty dependency array means this runs once on mount
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOtpCode(e.target.value)
+    const value = e.target.value.replace(/[^0-9]/g, '') // Only allow numbers
+    setOtpCode(value)
   }
 
   return (
@@ -67,6 +74,7 @@ export default function SMSReader() {
           pattern="[0-9]*"
           inputMode="numeric"
           maxLength={6}
+          autoComplete="one-time-code"
         />
       </div>
 
@@ -75,6 +83,11 @@ export default function SMSReader() {
           <p>{error}</p>
         </div>
       )}
+
+      {/* Debug display */}
+      <div className="text-sm text-gray-500 mt-2">
+        {otpCode && <p>Detected code: {otpCode}</p>}
+      </div>
     </div>
   )
 }
