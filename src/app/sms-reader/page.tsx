@@ -1,14 +1,13 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function SMSReader() {
-  const [otpCode, setOtpCode] = useState<string>('')
-  const [error, setError] = useState<string>('')
+  const [otpCode, setOtpCode] = useState('')
+  const [error, setError] = useState('')
   const [isReading, setIsReading] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const readOTP = async () => {
+  const handleReadOTP = async () => {
     if (!('OTPCredential' in window)) {
       setError('WebOTP در این مرورگر پشتیبانی نمی شود')
       return
@@ -18,79 +17,76 @@ export default function SMSReader() {
     setError('')
 
     try {
-      // Use the WebOTP API
-      const content = await (navigator.credentials as any).get({
-        otp: { transport: ['sms'] }
+      // Create abort controller for timeout
+      const ac = new AbortController()
+      const timeoutId = setTimeout(() => ac.abort(), 60000) // 1 minute timeout
+
+      // Request OTP
+      const otp = await navigator.credentials.get({
+        //@ts-ignore
+        otp: { transport: ['sms'] },
+        signal: ac.signal
       })
 
-      console.log('SMS Content:', content)
+      clearTimeout(timeoutId)
 
-      if (content && 'code' in content) {
-        const code = content.code
-        console.log('Received code:', code)
-        // Update both state and input value
-        setOtpCode(code)
-        // Force update the input value
-        if (inputRef.current) {
-          inputRef.current.value = code
-        }
-      } else {
-        setError('کد OTP دریافت نشد')
+      //@ts-ignore
+      if (otp?.code) {
+        //@ts-ignore
+        setOtpCode(otp.code)
       }
+
     } catch (err) {
-      console.error('SMS reading error:', err)
+      console.error('Error reading SMS:', err)
       setError('خطا در خواندن پیامک')
     } finally {
       setIsReading(false)
     }
   }
 
-  // Start reading when component mounts
+  // Start listening for OTP when component mounts
   useEffect(() => {
-    const startReading = async () => {
-      await readOTP()
-    }
-    startReading()
+    handleReadOTP()
   }, [])
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">شناسایی کد OTP از پیامک</h1>
+    <div className="p-4 flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-6">شناسایی کد OTP از پیامک</h1>
       
-      <div className="mb-4">
-        <label htmlFor="otp-input" className="block mb-2">کد OTP:</label>
-        <input
-          id="otp-input"
-          ref={inputRef}
-          type="text"
-          className="w-full max-w-xs px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="کد OTP را وارد کنید"
-          defaultValue={otpCode}
-          pattern="[0-9]*"
-          inputMode="numeric"
-          maxLength={6}
-          autoComplete="one-time-code"
-        />
-      </div>
-
-      <button 
-        onClick={readOTP}
-        disabled={isReading}
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
-      >
-        {isReading ? 'در حال خواندن...' : 'خواندن مجدد کد'}
-      </button>
-
-      {error && (
-        <div className="text-red-500 mt-2">
-          <p>{error}</p>
+      <div className="w-full max-w-xs space-y-4">
+        <div className="relative">
+          <input
+            type="text"
+            className="w-full px-4 py-3 text-center text-2xl tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value)}
+            placeholder="_ _ _ _ _ _"
+            maxLength={6}
+            pattern="[0-9]*"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+          />
         </div>
-      )}
 
-      {/* Debug display */}
-      <div className="text-sm text-gray-500 mt-2">
-        <p>Status: {isReading ? 'در حال خواندن...' : 'آماده'}</p>
-        {otpCode && <p>کد دریافت شده: {otpCode}</p>}
+        <button 
+          onClick={handleReadOTP}
+          disabled={isReading}
+          className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+        >
+          {isReading ? 'در حال خواندن پیامک...' : 'خواندن مجدد پیامک'}
+        </button>
+
+        {error && (
+          <div className="text-red-500 text-center p-2 rounded-lg bg-red-50">
+            {error}
+          </div>
+        )}
+
+        {otpCode && (
+          <div className="text-green-600 text-center p-2 rounded-lg bg-green-50">
+            کد تایید با موفقیت دریافت شد
+          </div>
+        )}
       </div>
     </div>
   )
