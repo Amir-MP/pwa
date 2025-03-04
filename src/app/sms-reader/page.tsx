@@ -6,9 +6,15 @@ export default function SMSReader() {
   const [otpCode, setOtpCode] = useState('')
   const [error, setError] = useState('')
   const [isReading, setIsReading] = useState(false)
+  const [isSupported, setIsSupported] = useState(false)
+
+  // Check for WebOTP support on mount
+  useEffect(() => {
+    setIsSupported('OTPCredential' in window)
+  }, [])
 
   const handleReadOTP = async () => {
-    if (!('OTPCredential' in window)) {
+    if (!isSupported) {
       setError('WebOTP در این مرورگر پشتیبانی نمی شود')
       return
     }
@@ -19,19 +25,20 @@ export default function SMSReader() {
     try {
       const abortController = new AbortController()
 
-      // Use the WebOTP API directly
-      const result = await (window as any).OTPCredential.receive({
+      const credential = await navigator.credentials.get({
+        //@ts-ignore
         otp: { transport: ['sms'] },
         signal: abortController.signal
       })
 
-      console.log('SMS Result:', result)
+      console.log('SMS Credential:', credential)
 
-      if (result) {
-        // Extract just the numbers from the result
-        const code = result.replace(/\D/g, '')
-        console.log('Extracted code:', code)
-        setOtpCode(code)
+      //@ts-ignore
+      if (credential?.code) {
+        //@ts-ignore
+        console.log('Received code:', credential.code)
+        //@ts-ignore
+        setOtpCode(credential.code)
       }
 
     } catch (err) {
@@ -48,33 +55,32 @@ export default function SMSReader() {
 
   // Start listening for OTP when component mounts
   useEffect(() => {
-    if ('OTPCredential' in window) {
-      // Add event listener for WebOTP
+    if (isSupported) {
       const ac = new AbortController()
       
       navigator.credentials.get({
         //@ts-ignore
-        otp: {
-          transport: ['sms']
-        },
+        otp: { transport: ['sms'] },
         signal: ac.signal
-      }).then(result => {
+      }).then(credential => {
         //@ts-ignore
-        if (result?.code) {
+        if (credential?.code) {
           //@ts-ignore
-          console.log('OTP received:', result.code)
+          console.log('OTP received:', credential.code)
           //@ts-ignore
-          setOtpCode(result.code)
+          setOtpCode(credential.code)
         }
       }).catch(err => {
-        console.error('OTP Error:', err)
+        if (err.name !== 'AbortError') {
+          console.error('OTP Error:', err)
+        }
       })
 
       return () => {
         ac.abort()
       }
     }
-  }, [])
+  }, [isSupported])
 
   return (
     <div className="p-4 flex flex-col items-center">
@@ -97,7 +103,7 @@ export default function SMSReader() {
 
         <button 
           onClick={handleReadOTP}
-          disabled={isReading}
+          disabled={isReading || !isSupported}
           className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
         >
           {isReading ? 'در حال خواندن پیامک...' : 'خواندن مجدد پیامک'}
@@ -117,7 +123,7 @@ export default function SMSReader() {
 
         {/* Debug info */}
         <div className="text-xs text-gray-500">
-          <p>WebOTP supported: {String('OTPCredential' in window)}</p>
+          <p>WebOTP supported: {String(isSupported)}</p>
           <p>Current status: {isReading ? 'Reading...' : 'Ready'}</p>
         </div>
       </div>
