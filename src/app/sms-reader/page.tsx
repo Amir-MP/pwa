@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react'
 
+interface WebOTPCredential extends Credential {
+  code: string
+}
+
 export default function SMSReader() {
   const [otpCode, setOtpCode] = useState<string>('')
   const [error, setError] = useState<string>('')
@@ -21,12 +25,13 @@ export default function SMSReader() {
       const abortController = new AbortController()
 
       // Start listening for SMS
-      const credential = await navigator.credentials.get({
+      const credential = await (navigator.credentials as any).get({
+        //@ts-ignore - WebOTP API types are not yet in TypeScript
         otp: {
-          transport: ['sms'],
-          signal: abortController.signal
-        }
-      }) as any
+          transport: ['sms']
+        },
+        signal: abortController.signal
+      }) as WebOTPCredential
 
       console.log('Received credential:', credential)
 
@@ -40,7 +45,14 @@ export default function SMSReader() {
       }
     } catch (err) {
       console.error('OTP Error:', err)
-      setError('خطایی رخ داده است: ' + (err instanceof Error ? err.message : String(err)))
+      if (err instanceof Error) {
+        // Don't show abort errors to user
+        if (err.name !== 'AbortError') {
+          setError('خطایی رخ داده است: ' + err.message)
+        }
+      } else {
+        setError('خطایی رخ داده است')
+      }
     } finally {
       setIsReading(false)
     }
