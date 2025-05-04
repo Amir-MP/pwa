@@ -47,7 +47,8 @@ export default function LocationContent() {
     if (userAgent.indexOf("Chrome") > -1) return "Chrome";
     if (userAgent.indexOf("Safari") > -1) return "Safari";
     if (userAgent.indexOf("Firefox") > -1) return "Firefox";
-    if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1) return "IE";
+    if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1)
+      return "IE";
     if (userAgent.indexOf("Edge") > -1) return "Edge";
     return "Unknown";
   };
@@ -56,18 +57,22 @@ export default function LocationContent() {
   const getLocationViaIP = async () => {
     try {
       setDebugInfo("Trying to get location via IP...");
-      
+
       // Use a free IP geolocation API
       const response = await fetch("https://ipapi.co/json/");
       const data = await response.json();
-      
+
       if (data && data.longitude && data.latitude) {
         setUserLocation([data.longitude, data.latitude]);
-        setDebugInfo(`IP-based location: ${data.longitude.toFixed(6)}, ${data.latitude.toFixed(6)}`);
+        setDebugInfo(
+          `IP-based location: ${data.longitude.toFixed(
+            6
+          )}, ${data.latitude.toFixed(6)}`
+        );
         setLoading(false);
         return true;
       }
-      
+
       setDebugInfo("IP-based location failed");
       return false;
     } catch (err) {
@@ -117,7 +122,7 @@ export default function LocationContent() {
       setError("Geolocation is not supported by your browser");
       setDebugInfo("Geolocation not supported");
       setLoading(false);
-      
+
       // Try IP-based location as fallback
       const gotIPLocation = await getLocationViaIP();
       if (!gotIPLocation) {
@@ -136,7 +141,7 @@ export default function LocationContent() {
         const { latitude, longitude } = position.coords;
         setUserLocation([longitude, latitude]);
         setDebugInfo(
-          `Location received: ${longitude.toFixed(6)}, ${latitude.toFixed(6)}`
+          `${longitude.toFixed(6)}, ${latitude.toFixed(6)}`
         );
         setLoading(false);
       },
@@ -157,7 +162,7 @@ export default function LocationContent() {
   const handleGeolocationError = async (error) => {
     let errorMessage = "Unknown error";
     let shouldTryLowAccuracy = false;
-    
+
     // Handle specific geolocation errors
     switch (error.code) {
       case 1: // PERMISSION_DENIED
@@ -172,32 +177,38 @@ export default function LocationContent() {
         shouldTryLowAccuracy = true;
         break;
     }
-    
-    setDebugInfo(`Geolocation error: (${error.code}) ${errorMessage} - ${error.message}`);
-    
+
+    setDebugInfo(
+      `Geolocation error: (${error.code}) ${errorMessage} - ${error.message}`
+    );
+
     // Add more technical details for debugging
     const technicalDetails = [];
-    if (error.code === 2) { // POSITION_UNAVAILABLE
-      if (typeof window !== 'undefined') {
+    if (error.code === 2) {
+      // POSITION_UNAVAILABLE
+      if (typeof window !== "undefined") {
         technicalDetails.push(`Browser: ${navigator.userAgent}`);
         technicalDetails.push(`Platform: ${navigator.platform}`);
-        
+
         if ("connection" in navigator) {
           // @ts-ignore
-          const connectionType = navigator.connection?.effectiveType || "unknown";
+          const connectionType =
+            navigator.connection?.effectiveType || "unknown";
           // @ts-ignore
           const isOnline = navigator.onLine;
-          technicalDetails.push(`Network: ${connectionType}, Online: ${isOnline}`);
+          technicalDetails.push(
+            `Network: ${connectionType}, Online: ${isOnline}`
+          );
         }
       }
-      
+
       console.log("Technical details:", technicalDetails.join("; "));
     }
-    
+
     // Try again with low accuracy if it was a timeout or unavailable error
     if (shouldTryLowAccuracy && retryCount < 2) {
       setDebugInfo("Trying again with low accuracy...");
-      
+
       // Try with low accuracy and longer timeout as fallback
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -213,10 +224,10 @@ export default function LocationContent() {
         async (lowAccError) => {
           // If this fails too, try IP-based location
           setDebugInfo(`Low accuracy also failed: (${lowAccError.code})`);
-          
+
           // Try IP-based location as a last resort
           const gotIPLocation = await getLocationViaIP();
-          
+
           if (!gotIPLocation) {
             // If IP-based location fails, show the error and suggest default location
             setError(`Error getting location: ${errorMessage}`);
@@ -232,7 +243,7 @@ export default function LocationContent() {
     } else {
       // If we've already retried or it's a permission error, try IP geolocation
       const gotIPLocation = await getLocationViaIP();
-      
+
       if (!gotIPLocation) {
         // If IP-based location fails, show the error
         setError(`Error getting location: ${errorMessage}`);
@@ -307,34 +318,7 @@ export default function LocationContent() {
           <div className="text-white text-center mb-4 text-lg">
             {loading ? "Getting location..." : "No location data available"}
           </div>
-          <div className="text-gray-400 text-sm text-center max-w-md">
-            {!loading && (
-              <div>
-                <p className="mb-2">Please ensure that:</p>
-                <ul className="list-disc list-inside text-left">
-                  <li>You've allowed location access in your browser</li>
-                  <li>Your device has GPS or network location enabled</li>
-                  <li>You're not using a VPN that might mask your location</li>
-                  <li>
-                    You've enabled precise location in your device settings
-                  </li>
-                </ul>
-                <p className="mt-4 text-yellow-300">
-                  Location permission:{" "}
-                  <span className="font-bold">{geoPermissionStatus}</span>
-                </p>
-                {deviceInfo && (
-                  <p className="mt-1 text-yellow-300">
-                    Device: <span className="font-bold">{deviceInfo}</span>
-                  </p>
-                )}
-                <p className="mt-2">
-                  Click the "بروزرسانی موقعیت" button to try again, or use the
-                  default location.
-                </p>
-              </div>
-            )}
-          </div>
+          <div className="text-gray-400 text-sm text-center max-w-md"></div>
         </div>
       )}
     </div>
