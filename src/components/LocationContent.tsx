@@ -140,9 +140,7 @@ export default function LocationContent() {
       (position) => {
         const { latitude, longitude } = position.coords;
         setUserLocation([longitude, latitude]);
-        setDebugInfo(
-          `${longitude.toFixed(6)}, ${latitude.toFixed(6)}`
-        );
+        setDebugInfo(`${longitude.toFixed(6)}, ${latitude.toFixed(6)}`);
         setLoading(false);
       },
       // Error callback - we'll handle specific error types
@@ -193,6 +191,7 @@ export default function LocationContent() {
         if ("connection" in navigator) {
           // @ts-ignore
           const connectionType =
+          // @ts-ignore
             navigator.connection?.effectiveType || "unknown";
           // @ts-ignore
           const isOnline = navigator.onLine;
