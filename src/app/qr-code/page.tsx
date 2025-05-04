@@ -12,7 +12,6 @@ export default function QRCodeScanner() {
   useEffect(() => {
     scannerRef.current = new Html5Qrcode("qr-reader");
 
-    // Cleanup on unmount
     return () => {
       if (scannerRef.current && scannerRef.current.isScanning) {
         scannerRef.current.stop();
@@ -27,7 +26,6 @@ export default function QRCodeScanner() {
       setError("");
       setIsScanning(true);
 
-      // Try back camera first
       try {
         await scannerRef.current.start(
           { facingMode: { exact: "environment" } },
@@ -40,10 +38,9 @@ export default function QRCodeScanner() {
             setData(decodedText);
             stopScanning();
           },
-          () => {} // Ignore failures
+          () => {} 
         );
       } catch {
-        // If back camera fails, try any available camera
         await scannerRef.current.start(
           { facingMode: "user" },
           {
@@ -55,7 +52,7 @@ export default function QRCodeScanner() {
             setData(decodedText);
             stopScanning();
           },
-          () => {} // Ignore failures
+          () => {}
         );
       }
     } catch (err) {
@@ -90,7 +87,7 @@ export default function QRCodeScanner() {
       setError("");
       const result = await scannerRef.current.scanFile(
         file,
-        /* showImage */ false
+       false
       );
       setData(result);
     } catch (err) {
@@ -99,7 +96,6 @@ export default function QRCodeScanner() {
           (err instanceof Error ? err.message : String(err))
       );
     } finally {
-      // Reset the input value so the same file can be uploaded again
       event.target.value = "";
     }
   };

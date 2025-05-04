@@ -13,31 +13,26 @@ function FingerprintAuthContent() {
       setIsLoading(true);
       setError(null);
 
-      // Check if the browser supports biometric authentication
       if (!window.PublicKeyCredential) {
         throw new Error(
-          "Biometric authentication is not supported in this browser"
+          "اثر انگشت در این مرورگر پشتیبانی نمی شود"
         );
       }
 
-      // Check if platform authenticator is available
       const available =
         await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       if (!available) {
         throw new Error(
-          "Biometric authentication is not available on this device"
+          "اثر انگشت در این دستگاه موجود نیست"
         );
       }
 
-      // Generate a random challenge
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
 
-      // Generate random user ID
       const userId = new Uint8Array(16);
       crypto.getRandomValues(userId);
 
-      // Create registration options for first-time setup
       const registrationOptions: PublicKeyCredentialCreationOptions = {
         challenge,
         rp: {
@@ -64,27 +59,25 @@ function FingerprintAuthContent() {
       };
 
       try {
-        // Create credentials and trigger biometric auth
         const credential = await navigator.credentials.create({
           publicKey: registrationOptions,
         });
 
         if (!credential) {
-          throw new Error("No credentials received");
+          throw new Error("خطایی رخ داده است");
         }
 
-        // If we get here, authentication was successful
-        console.log("Authentication successful");
+        console.log("ورود با موفقیت انجام شد");
         router.push("/dashboard");
       } catch (credentialError) {
-        throw new Error("Biometric authentication failed. Please try again.");
+        throw new Error("خطایی رخ داده است");
       }
     } catch (err) {
-      console.error("Authentication error:", err);
+      console.error("خطایی رخ داده است:", err);
       setError(
         err instanceof Error
           ? err.message
-          : "Authentication failed. Please try again."
+          : "خطایی رخ داده است"
       );
     } finally {
       setIsLoading(false);

@@ -14,12 +14,11 @@ export default function SignatureComponent({ onSave, onClear }: SignatureCompone
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Dynamic import of the component
     import('react-signature-canvas')
       .then((module) => {
         setSignaturePadComponent(() => module.default);
       })
-      .catch((err) => console.error('Failed to load SignaturePad:', err));
+      .catch((err) => console.error('خطایی رخ داده است:', err));
   }, []);
 
   useEffect(() => {
@@ -35,10 +34,9 @@ export default function SignatureComponent({ onSave, onClear }: SignatureCompone
   }, [onSave]);
 
   useEffect(() => {
-    // Adjust canvas size when component mounts
     if (containerRef.current && signaturePadRef.current) {
       const canvas = signaturePadRef.current as any;
-      canvas.clear(); // Clear any existing signature
+      canvas.clear(); 
     }
   }, [SignaturePadComponent]);
 

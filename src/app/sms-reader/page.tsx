@@ -8,7 +8,6 @@ export default function SMSReader() {
   const [isReading, setIsReading] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
 
-  // Check for WebOTP support on mount
   useEffect(() => {
     setIsSupported('OTPCredential' in window)
   }, [])
@@ -53,7 +52,6 @@ export default function SMSReader() {
     }
   }
 
-  // Start listening for OTP when component mounts
   useEffect(() => {
     if (isSupported) {
       const ac = new AbortController()
@@ -81,6 +79,12 @@ export default function SMSReader() {
       }
     }
   }, [isSupported])
+
+  useEffect(()=>{
+
+  },[])
+
+ 
 
   return (
     <div className="p-4 flex flex-col items-center">
@@ -121,7 +125,6 @@ export default function SMSReader() {
           </div>
         )}
 
-        {/* Debug info */}
         <div className="text-xs text-gray-500">
           <p>WebOTP supported: {String(isSupported)}</p>
           <p>Current status: {isReading ? 'Reading...' : 'Ready'}</p>
@@ -131,7 +134,6 @@ export default function SMSReader() {
   )
 }
 
-// Add TypeScript interface for OTPCredential since it might not be recognized
 declare global {
   interface Window {
     OTPCredential: any

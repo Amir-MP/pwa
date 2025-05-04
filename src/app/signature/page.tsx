@@ -31,7 +31,6 @@ export default function Signature() {
       }
     };
 
-    // Add a small delay to ensure the container is properly mounted
     setTimeout(updateCanvasSize, 0);
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
@@ -44,7 +43,6 @@ export default function Signature() {
     }
 
     try {
-      // Use toData() instead of getTrimmedCanvas()
       const dataURL = signatureRef.current.toDataURL("image/png");
       setSignatureData(dataURL);
       console.log("Signature saved:", dataURL);
@@ -63,7 +61,7 @@ export default function Signature() {
         ref={containerRef}
         className="bg-gray-800 p-4 rounded-lg shadow-lg w-full max-w-[500px]"
       >
-        {canvasSize.width > 0 && ( // Only render canvas when we have a valid width
+        {canvasSize.width > 0 && ( 
           <SignatureCanvas
             //@ts-ignore
             ref={signatureRef}

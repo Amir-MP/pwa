@@ -16,15 +16,12 @@ const SendSMSPage = () => {
     try {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-      // Try SMS URL first
       let smsUrl = isIOS
         ? `sms:&body=${encodeURIComponent(message)}`
         : `sms:?body=${encodeURIComponent(message)}`;
 
-      // Try to open SMS app
       window.location.href = smsUrl;
 
-      // If SMS URL doesn't work, try Web Share API as fallback
       setTimeout(async () => {
         try {
           if (navigator.share) {
