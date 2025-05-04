@@ -9,7 +9,10 @@ export interface MapComponentProps {
   isDefaultLocation?: boolean;
 }
 
-export default function MapComponent({ userLocation, isDefaultLocation = false }: MapComponentProps) {
+export default function MapComponent({
+  userLocation,
+  isDefaultLocation = false,
+}: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -19,17 +22,24 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
   const isValidCoordinate = (coord: [number, number]): boolean => {
     if (!coord || coord.length !== 2) return false;
     const [lng, lat] = coord;
-    return !isNaN(lng) && !isNaN(lat) && 
-           lng >= -180 && lng <= 180 && 
-           lat >= -90 && lat <= 90;
+    return (
+      !isNaN(lng) &&
+      !isNaN(lat) &&
+      lng >= -180 &&
+      lng <= 180 &&
+      lat >= -90 &&
+      lat <= 90
+    );
   };
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-    
+
     // Validate coordinates first
     if (!isValidCoordinate(userLocation)) {
-      setMapError(`Invalid coordinates: ${userLocation}. Using default location.`);
+      setMapError(
+        `Invalid coordinates: ${userLocation}. Using default location.`
+      );
       return;
     }
 
@@ -65,13 +75,16 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
       });
 
       // Add map controls
-      map.current.addControl(new maplibregl.AttributionControl(), 'bottom-left');
-      map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-      map.current.addControl(new maplibregl.ScaleControl(), 'bottom-right');
-      
+      map.current.addControl(
+        new maplibregl.AttributionControl(),
+        "bottom-left"
+      );
+      map.current.addControl(new maplibregl.NavigationControl(), "top-right");
+      map.current.addControl(new maplibregl.ScaleControl(), "bottom-right");
+
       // Handle map errors
-      map.current.on('error', (e) => {
-        console.error('Map error:', e.error);
+      map.current.on("error", (e) => {
+        console.error("Map error:", e.error);
         setMapError("Error loading map. Please try refreshing the page.");
       });
 
@@ -82,7 +95,9 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
       });
     } catch (error) {
       console.error("Error initializing map:", error);
-      setMapError("Could not initialize map. Please check if WebGL is enabled in your browser.");
+      setMapError(
+        "Could not initialize map. Please check if WebGL is enabled in your browser."
+      );
     }
 
     // Cleanup
@@ -101,11 +116,11 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
   // This effect handles updating the marker when the location changes
   useEffect(() => {
     if (!map.current || !mapContainer.current) return;
-    
+
     try {
       // Update map center when location changes
       map.current.setCenter(userLocation);
-      
+
       // Update the marker and circle
       addMarkerAndCircle();
     } catch (error) {
@@ -118,29 +133,31 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
 
     try {
       // Remove previous markers and sources if they exist
-      const existingMarkers = document.querySelectorAll('.maplibregl-marker');
-      existingMarkers.forEach(marker => marker.remove());
+      const existingMarkers = document.querySelectorAll(".maplibregl-marker");
+      existingMarkers.forEach((marker) => marker.remove());
 
-      if (map.current.getSource('accuracy-circle')) {
-        map.current.removeLayer('accuracy-circle');
-        map.current.removeSource('accuracy-circle');
+      if (map.current.getSource("accuracy-circle")) {
+        map.current.removeLayer("accuracy-circle");
+        map.current.removeSource("accuracy-circle");
       }
 
       // Add new marker
       const markerColor = isDefaultLocation ? "#FFA500" : "#FF0000"; // Orange for default, Red for actual
-      const markerElement = document.createElement('div');
-      markerElement.className = 'custom-marker';
+      const markerElement = document.createElement("div");
+      markerElement.className = "custom-marker";
       markerElement.style.backgroundColor = markerColor;
-      markerElement.style.width = '20px';
-      markerElement.style.height = '20px';
-      markerElement.style.borderRadius = '50%';
-      markerElement.style.border = '2px solid white';
-      markerElement.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+      markerElement.style.width = "20px";
+      markerElement.style.height = "20px";
+      markerElement.style.borderRadius = "50%";
+      markerElement.style.border = "2px solid white";
+      markerElement.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
 
       // Add a popup to the marker
       const popup = new maplibregl.Popup({ closeButton: false })
         .setHTML(`<div style="padding:5px;">
-          <strong>${isDefaultLocation ? 'Default Location' : 'Your Location'}</strong>
+          <strong>${
+            isDefaultLocation ? "Default Location" : "Your Location"
+          }</strong>
           <br>
           ${userLocation[1].toFixed(6)}, ${userLocation[0].toFixed(6)}
         </div>`);
@@ -169,31 +186,23 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
           id: "accuracy-circle",
           type: "circle",
           source: "accuracy-circle",
-          paint: {
-            "circle-radius": 200, // Fixed radius for visual purposes
-            "circle-color": "rgba(66, 135, 245, 0.2)",
-            "circle-stroke-color": "rgba(66, 135, 245, 0.8)",
-            "circle-stroke-width": 1,
-          },
         });
       }
 
       // Add a 'You are here' label
-      const labelEl = document.createElement('div');
-      labelEl.className = 'location-label maplibregl-marker';
-      labelEl.textContent = isDefaultLocation ? 'Default Location' : 'You are here';
-      labelEl.style.backgroundColor = 'rgba(0,0,0,0.7)';
-      labelEl.style.color = 'white';
-      labelEl.style.padding = '4px 8px';
-      labelEl.style.borderRadius = '4px';
-      labelEl.style.fontSize = '12px';
-      labelEl.style.pointerEvents = 'none';
-      labelEl.style.transform = 'translate(-50%, -150%)';
-      
+      const labelEl = document.createElement("div");
+      labelEl.className = "location-label maplibregl-marker";
+      labelEl.style.backgroundColor = "rgba(0,0,0,0.7)";
+      labelEl.style.color = "white";
+      labelEl.style.padding = "4px 8px";
+      labelEl.style.borderRadius = "4px";
+      labelEl.style.fontSize = "12px";
+      labelEl.style.pointerEvents = "none";
+      labelEl.style.transform = "translate(-50%, -150%)";
+
       new maplibregl.Marker({ element: labelEl })
         .setLngLat(userLocation)
         .addTo(map.current);
-
     } catch (error) {
       console.error("Error adding marker:", error);
     }
@@ -222,9 +231,9 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
   }
 
   return (
-    <div 
-      ref={mapContainer} 
-      className="flex-grow relative" 
+    <div
+      ref={mapContainer}
+      className="flex-grow relative"
       style={{ minHeight: "calc(100vh - 120px)" }}
     >
       {!mapLoaded && (
@@ -237,4 +246,4 @@ export default function MapComponent({ userLocation, isDefaultLocation = false }
       )}
     </div>
   );
-} 
+}
