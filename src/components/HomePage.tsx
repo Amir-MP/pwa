@@ -22,6 +22,7 @@ import {
   Person as PersonIcon,
   Home,
   Message as MessageIcon,
+  LocationOn as LocationOnIcon,
 } from "@mui/icons-material";
 import ThemeToggle from "./ThemeToggle";
 
@@ -41,6 +42,7 @@ const NAVIGATION_ITEMS = {
     { name: "ضبط ویدئو", icon: <MedicalIcon />, href: "/face-recording" },
     { name: "ارسال پیامک", icon: <MessageIcon />, href: "/send-sms" },
     { name: "خواندن پیامک", icon: <MessageIcon />, href: "/sms-reader" },
+    { name: "موقعیت مکانی", icon: <LocationOnIcon />, href: "/location" },
   ],
   quickAccess: [
     { name: "درخواست ها (بزودی)", icon: <RequestIcon />, href: "/requests" },
